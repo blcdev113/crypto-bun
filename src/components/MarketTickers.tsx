@@ -51,7 +51,183 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
 
       {/* Market Overview */}
       <div className="px-4 py-2">
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {sortedTokens.filter(token => ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].includes(token.symbol)).map((token) => {
+            const symbol = getTokenSymbol(token.symbol);
+            const logo = cryptoLogos[symbol];
+            const isPositive = token.priceChange >= 0;
+            
+            // Generate mini sparkline data (simplified)
+            const generateSparklineData = () => {
+              const points = [];
+              let value = 50;
+              for (let i = 0; i < 20; i++) {
+                value += (Math.random() - 0.5) * 10;
+                value = Math.max(10, Math.min(90, value));
+                points.push(value);
+              }
+              return points;
+            };
+            
+            const sparklineData = generateSparklineData();
+            const pathData = sparklineData.map((point, index) => 
+              `${index === 0 ? 'M' : 'L'} ${(index / (sparklineData.length - 1)) * 60} ${60 - (point / 100) * 40}`
+            ).join(' ');
+            
+            return (
+              <div 
+                key={token.symbol}
+                className={`p-4 rounded-lg transition-colors relative overflow-hidden ${
+                  isPositive 
+                    ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
+                    : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
+                }`}
+              >
+                {/* Background sparkline */}
+                <div className="absolute top-0 right-0 w-16 h-full opacity-20">
+                  <svg width="60" height="60" className="w-full h-full">
+                    <path
+                      d={pathData}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      className="text-white"
+                    />
+                  </svg>
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      {logo ? (
+                        <img 
+                          src={logo} 
+                          alt={symbol} 
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-sm font-bold mr-2">
+                          {symbol.substring(0, 1)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-white font-semibold text-sm">
+                          {symbol}USDT
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-white text-xs font-medium">
+                      {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
+                    </div>
+                  </div>
+                  
+                  <div className="text-white">
+                    <div className="text-lg font-bold">
+                      {token.price < 1 
+                        ? token.price.toFixed(6)
+                        : token.price.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add TRX and XRP cards */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {sortedTokens.filter(token => ['TRXUSDT', 'XRPUSDT'].includes(token.symbol)).map((token) => {
+            const symbol = getTokenSymbol(token.symbol);
+            const logo = cryptoLogos[symbol];
+            const isPositive = token.priceChange >= 0;
+            
+            // Generate mini sparkline data
+            const generateSparklineData = () => {
+              const points = [];
+              let value = 50;
+              for (let i = 0; i < 20; i++) {
+                value += (Math.random() - 0.5) * 10;
+                value = Math.max(10, Math.min(90, value));
+                points.push(value);
+              }
+              return points;
+            };
+            
+            const sparklineData = generateSparklineData();
+            const pathData = sparklineData.map((point, index) => 
+              `${index === 0 ? 'M' : 'L'} ${(index / (sparklineData.length - 1)) * 60} ${60 - (point / 100) * 40}`
+            ).join(' ');
+            
+            return (
+              <div 
+                key={token.symbol}
+                className={`p-4 rounded-lg transition-colors relative overflow-hidden ${
+                  isPositive 
+                    ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
+                    : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
+                }`}
+              >
+                {/* Background sparkline */}
+                <div className="absolute top-0 right-0 w-16 h-full opacity-20">
+                  <svg width="60" height="60" className="w-full h-full">
+                    <path
+                      d={pathData}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      className="text-white"
+                    />
+                  </svg>
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      {logo ? (
+                        <img 
+                          src={logo} 
+                          alt={symbol} 
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-sm font-bold mr-2">
+                          {symbol.substring(0, 1)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-white font-semibold text-sm">
+                          {symbol}USDT
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-white text-xs font-medium">
+                      {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
+                    </div>
+                  </div>
+                  
+                  <div className="text-white">
+                    <div className="text-lg font-bold">
+                      {token.price < 1 
+                        ? token.price.toFixed(6)
+                        : token.price.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Remove the old market overview cards */}
+        <div className="hidden">
           {sortedTokens.slice(0, 3).map((token) => {
             const symbol = getTokenSymbol(token.symbol);
             const logo = cryptoLogos[symbol];
