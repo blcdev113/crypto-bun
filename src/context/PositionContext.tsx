@@ -1,20 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { binanceWS } from '../services/binanceWebSocket';
 import { useUser } from './UserContext';
-import { createClient } from '@supabase/supabase-js';
-
-// Validate Supabase environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your .env file.');
-}
-
-const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
 
 interface Position {
   id: string;
@@ -63,68 +49,39 @@ interface PositionProviderProps {
 export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) => {
   const { user } = useUser();
   const [positions, setPositions] = useState<Position[]>([]);
-  const [portfolioBalance, setPortfolioBalance] = useState(0);
-  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([]);
+  const [portfolioBalance, setPortfolioBalance] = useState(10000); // Start with $10,000
+  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([
+    { symbol: 'USDT', balance: 10000 },
+    { symbol: 'BTC', balance: 0 },
+    { symbol: 'ETH', balance: 0 },
+    { symbol: 'SOL', balance: 0 },
+    { symbol: 'BNB', balance: 0 },
+    { symbol: 'XRP', balance: 0 },
+    { symbol: 'ADA', balance: 0 },
+    { symbol: 'DOGE', balance: 0 },
+    { symbol: 'MATIC', balance: 0 },
+    { symbol: 'DOT', balance: 0 }
+  ]);
   const [currentPrices, setCurrentPrices] = useState<Map<string, number>>(new Map());
 
-  // Initialize or load user's balance
+  // Reset balances when user logs in
   useEffect(() => {
-    const initializeUserBalance = async () => {
-      if (!user) {
-        console.log('No user found, skipping balance initialization');
-        return;
-      }
-
-      try {
-        console.log('Attempting to initialize user balance for user:', user.id);
-        
-        // First, check if we can connect to Supabase
-        const { error: healthCheckError } = await supabase.from('user_balances').select('count').limit(1);
-        if (healthCheckError) {
-          throw new Error(`Supabase connection check failed: ${healthCheckError.message}`);
-        }
-
-        // Update user's balance to 10,000 USDT
-        const { data: updatedBalance, error: updateError } = await supabase
-          .from('user_balances')
-          .upsert(
-            { user_id: user.id, balance: 10000 },
-            { onConflict: 'user_id' }
-          )
-          .select()
-          .single();
-
-        if (updateError) {
-          throw new Error(`Failed to update balance: ${updateError.message}`);
-        }
-
-        if (updatedBalance) {
-          console.log('Successfully updated user balance:', updatedBalance);
-          setPortfolioBalance(10000);
-          setTokenBalances([
-            { symbol: 'USDT', balance: 10000 },
-            { symbol: 'BTC', balance: 0 },
-            { symbol: 'ETH', balance: 0 },
-            { symbol: 'SOL', balance: 0 },
-            { symbol: 'BNB', balance: 0 },
-            { symbol: 'XRP', balance: 0 },
-            { symbol: 'ADA', balance: 0 },
-            { symbol: 'DOGE', balance: 0 },
-            { symbol: 'MATIC', balance: 0 },
-            { symbol: 'DOT', balance: 0 }
-          ]);
-        } else {
-          console.error('No balance data returned after update');
-        }
-      } catch (error) {
-        console.error('Error updating user balance:', error);
-        throw error;
-      }
-    };
-
-    initializeUserBalance().catch(error => {
-      console.error('Failed to initialize user balance:', error);
-    });
+    if (user) {
+      setPortfolioBalance(10000);
+      setTokenBalances([
+        { symbol: 'USDT', balance: 10000 },
+        { symbol: 'BTC', balance: 0 },
+        { symbol: 'ETH', balance: 0 },
+        { symbol: 'SOL', balance: 0 },
+        { symbol: 'BNB', balance: 0 },
+        { symbol: 'XRP', balance: 0 },
+        { symbol: 'ADA', balance: 0 },
+        { symbol: 'DOGE', balance: 0 },
+        { symbol: 'MATIC', balance: 0 },
+        { symbol: 'DOT', balance: 0 }
+      ]);
+      setPositions([]);
+    }
   }, [user]);
 
   // Subscribe to price updates and update PNL
@@ -171,39 +128,13 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
     return () => unsubscribe();
   }, []);
 
-  const updateUsdtBalance = useCallback(async (amount: number) => {
-    if (!user) {
-      console.warn('Cannot update balance: No user logged in');
-      return;
-    }
-
+  const updateUsdtBalance = useCallback((amount: number) => {
     const newBalance = portfolioBalance + amount;
-    
-    try {
-      console.log('Attempting to update USDT balance for user:', user.id);
-      
-      // Update balance in database
-      const { error: updateError } = await supabase
-        .from('user_balances')
-        .update({ balance: newBalance })
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        throw new Error(`Failed to update balance: ${updateError.message}`);
-      }
-
-      console.log('Successfully updated balance to:', newBalance);
-      
-      // Update local state
-      setPortfolioBalance(newBalance);
-      setTokenBalances(prev => prev.map(token => 
-        token.symbol === 'USDT' ? { ...token, balance: token.balance + amount } : token
-      ));
-    } catch (error) {
-      console.error('Error updating balance:', error);
-      throw error;
-    }
-  }, [portfolioBalance, user]);
+    setPortfolioBalance(newBalance);
+    setTokenBalances(prev => prev.map(token => 
+      token.symbol === 'USDT' ? { ...token, balance: token.balance + amount } : token
+    ));
+  }, [portfolioBalance]);
 
   const convertTokens = useCallback((fromToken: string, toToken: string, amount: number, rate: number) => {
     setTokenBalances(prev => {

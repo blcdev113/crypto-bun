@@ -3,23 +3,15 @@ import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import { Moon, Sun, Zap, LogOut } from 'lucide-react';
 import AuthModal from './AuthModal';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setShowUserMenu(false);
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -31,7 +23,8 @@ const Header: React.FC = () => {
       
       <div className="flex items-center space-x-4">
         {user ? (
-          <div className="relative">
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-400">Welcome, {user.email}</span>
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg"
