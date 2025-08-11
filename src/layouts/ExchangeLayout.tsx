@@ -21,6 +21,16 @@ const ExchangeLayout: React.FC = () => {
   const [showTokenList, setShowTokenList] = React.useState(false);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
 
+  // Listen for navigation events from header
+  React.useEffect(() => {
+    const handleNavigateToFutures = () => {
+      setActiveTab('futures');
+    };
+
+    window.addEventListener('navigateToFutures', handleNavigateToFutures);
+    return () => window.removeEventListener('navigateToFutures', handleNavigateToFutures);
+  }, []);
+
   const getTokenSymbol = (symbol: string) => symbol.replace('USDT', '');
   const symbol = getTokenSymbol(selectedToken);
   const logo = cryptoLogos[symbol];
