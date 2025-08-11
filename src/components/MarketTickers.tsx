@@ -3,11 +3,6 @@ import { useToken } from '../context/TokenContext';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
 import { binanceWS, TokenPrice } from '../services/binanceWebSocket';
 import { cryptoLogos } from '../utils/cryptoLogos';
-import { ArrowUpFromLine, ArrowDownToLine, ArrowLeftRight, MoreHorizontal } from 'lucide-react';
-import DepositModal from './DepositModal';
-import WithdrawModal from './WithdrawModal';
-import ConvertModal from './ConvertModal';
-import { usePositions } from '../context/PositionContext';
 
 interface MarketTickersProps {
   onNavigateToFutures: () => void;
@@ -16,10 +11,6 @@ interface MarketTickersProps {
 const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) => {
   const [tokens, setTokens] = React.useState<TokenPrice[]>([]);
   const { setSelectedToken } = useToken();
-  const { tokenBalances } = usePositions();
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [showConvertModal, setShowConvertModal] = useState(false);
 
   React.useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
@@ -100,43 +91,6 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
           })}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-4 gap-4 mb-4">
-          <button 
-            onClick={() => setShowDepositModal(true)}
-            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
-              <ArrowDownToLine className="w-5 h-5 text-[#22C55E]" />
-            </div>
-            <span className="text-xs">Deposit</span>
-          </button>
-          <button 
-            onClick={() => setShowWithdrawModal(true)}
-            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
-              <ArrowUpFromLine className="w-5 h-5 text-[#EF4444]" />
-            </div>
-            <span className="text-xs">Withdraw</span>
-          </button>
-          <button 
-            onClick={() => setShowConvertModal(true)}
-            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
-              <ArrowLeftRight className="w-5 h-5 text-[#3B82F6]" />
-            </div>
-            <span className="text-xs">Convert</span>
-          </button>
-          <button className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg">
-            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
-              <MoreHorizontal className="w-5 h-5 text-[#F59E0B]" />
-            </div>
-            <span className="text-xs">More</span>
-          </button>
-        </div>
-
         {/* Market Table */}
         <div className="bg-[#1E293B] rounded-lg overflow-hidden">
           <div className="p-3 border-b border-gray-700">
@@ -190,7 +144,6 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
           </div>
         </div>
       </div>
-
     </div>
   );
 };
