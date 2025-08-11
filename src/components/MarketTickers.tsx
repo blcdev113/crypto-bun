@@ -191,22 +191,6 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
         </div>
       </div>
 
-      <DepositModal 
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-      />
-
-      <WithdrawModal
-        isOpen={showWithdrawModal}
-        onClose={() => setShowWithdrawModal(false)}
-      />
-
-      <ConvertModal 
-        isOpen={showConvertModal}
-        onClose={() => setShowConvertModal(false)}
-        prices={tokens}
-        tokenBalances={tokenBalances}
-      />
     </div>
   );
 };
