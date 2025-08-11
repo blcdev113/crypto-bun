@@ -26,31 +26,10 @@ const ExchangeLayout: React.FC = () => {
   const logo = cryptoLogos[symbol];
 
   const handleTabClick = (tab: string) => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
     setActiveTab(tab);
   };
 
   const renderContent = () => {
-    if (!user && activeTab !== 'home') {
-      return (
-        <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Login Required</h2>
-            <p className="text-gray-400 mb-4">Please login to access this feature</p>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-[#22C55E] hover:bg-[#16A34A] text-white px-6 py-2 rounded-lg font-medium"
-            >
-              Login
-            </button>
-          </div>
-        </div>
-      );
-    }
-
     switch (activeTab) {
       case 'home':
         return <MarketTickers onNavigateToFutures={() => handleTabClick('futures')} />;
@@ -125,21 +104,21 @@ const ExchangeLayout: React.FC = () => {
             <span className="text-xs mt-1">Home</span>
           </button>
           <button
-            onClick={() => handleTabClick('markets')}
+            onClick={() => setActiveTab('markets')}
             className={`flex flex-col items-center justify-center ${activeTab === 'markets' ? 'text-[#22C55E]' : 'text-gray-400'}`}
           >
             <BarChart2 size={20} />
             <span className="text-xs mt-1">Markets</span>
           </button>
           <button
-            onClick={() => handleTabClick('futures')}
+            onClick={() => setActiveTab('futures')}
             className={`flex flex-col items-center justify-center ${activeTab === 'futures' ? 'text-[#22C55E]' : 'text-gray-400'}`}
           >
             <LineChart size={20} />
             <span className="text-xs mt-1">Futures</span>
           </button>
           <button
-            onClick={() => handleTabClick('portfolio')}
+            onClick={() => setActiveTab('portfolio')}
             className={`flex flex-col items-center justify-center ${activeTab === 'portfolio' ? 'text-[#22C55E]' : 'text-gray-400'}`}
           >
             <Wallet size={20} />

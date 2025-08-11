@@ -35,7 +35,9 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
 
   const handleTrade = (symbol: string) => {
     setSelectedToken(symbol);
-    onNavigateToFutures();
+    if (onNavigateToFutures) {
+      onNavigateToFutures();
+    }
   };
 
   return (

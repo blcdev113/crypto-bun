@@ -22,7 +22,7 @@ const Header: React.FC = () => {
       </div>
       
       <div className="flex items-center space-x-4">
-        {user ? (
+        {user && user.email !== 'demo@cryptox.com' ? (
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-400">Welcome, {user.email}</span>
             <button
@@ -35,6 +35,9 @@ const Header: React.FC = () => {
           </div>
         ) : (
           <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-400 bg-[#2D3748] px-3 py-1 rounded-lg">
+              Demo Mode - Explore freely!
+            </span>
             <button 
               className="bg-[#2D3748] hover:bg-[#374151] text-white px-4 py-2 rounded-lg transition-all duration-200"
               onClick={() => {

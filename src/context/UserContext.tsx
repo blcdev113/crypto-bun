@@ -24,7 +24,11 @@ export const useUser = () => {
 };
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  // Start with a demo user so no login is required
+  const [user, setUser] = useState<User | null>({
+    id: 'demo-user',
+    email: 'demo@cryptox.com'
+  });
   const [loading, setLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
