@@ -63,10 +63,13 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   return (
     <header className="bg-[#0F172A] text-white py-4 px-6 flex items-center justify-between border-b border-gray-800 relative">
       <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
+        <button 
+          onClick={() => onTabChange('home')}
+          className="flex items-center space-x-2 hover:bg-[#1E293B] p-2 rounded-lg transition-colors"
+        >
           <Zap className="w-8 h-8 text-[#22C55E]" />
           <h1 className="text-2xl font-bold">TX</h1>
-        </div>
+        </button>
         
         <div className="relative">
           <button
