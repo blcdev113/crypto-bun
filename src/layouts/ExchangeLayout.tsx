@@ -8,7 +8,7 @@ import TradingSection from '../components/TradingSection';
 import Portfolio from '../components/Portfolio';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
-import { BarChart2, Home, LineChart, Wallet, Mail } from 'lucide-react';
+import { HelpCircle, Bell } from 'lucide-react';
 import { useToken } from '../context/TokenContext';
 import { cryptoLogos } from '../utils/cryptoLogos';
 import AuthModal from '../components/AuthModal';
@@ -20,16 +20,6 @@ const ExchangeLayout: React.FC = () => {
   const { selectedToken, setSelectedToken } = useToken();
   const [showTokenList, setShowTokenList] = React.useState(false);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-
-  // Listen for navigation events from header
-  React.useEffect(() => {
-    const handleNavigateToFutures = () => {
-      setActiveTab('futures');
-    };
-
-    window.addEventListener('navigateToFutures', handleNavigateToFutures);
-    return () => window.removeEventListener('navigateToFutures', handleNavigateToFutures);
-  }, []);
 
   const getTokenSymbol = (symbol: string) => symbol.replace('USDT', '');
   const symbol = getTokenSymbol(selectedToken);
@@ -91,6 +81,78 @@ const ExchangeLayout: React.FC = () => {
             <Portfolio />
           </div>
         );
+      case 'support':
+        return (
+          <div className="px-4 py-6">
+            <div className="bg-[#1E293B] rounded-lg p-6">
+              <div className="text-center">
+                <HelpCircle size={48} className="text-[#22C55E] mx-auto mb-4" />
+                <h2 className="text-2xl font-semibold mb-4">Support Center</h2>
+                <p className="text-gray-400 mb-6">
+                  Get help with your trading questions and technical issues
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[#2D3748] p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">FAQ</h3>
+                    <p className="text-sm text-gray-400">Find answers to common questions</p>
+                  </div>
+                  <div className="bg-[#2D3748] p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Live Chat</h3>
+                    <p className="text-sm text-gray-400">Chat with our support team</p>
+                  </div>
+                  <div className="bg-[#2D3748] p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Trading Guide</h3>
+                    <p className="text-sm text-gray-400">Learn how to trade effectively</p>
+                  </div>
+                  <div className="bg-[#2D3748] p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Contact Us</h3>
+                    <p className="text-sm text-gray-400">Reach out via email or phone</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'announcements':
+        return (
+          <div className="px-4 py-6">
+            <div className="bg-[#1E293B] rounded-lg p-6">
+              <div className="flex items-center mb-6">
+                <Bell size={24} className="text-[#22C55E] mr-3" />
+                <h2 className="text-2xl font-semibold">Announcements</h2>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#22C55E]">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">New Trading Pairs Added</h3>
+                    <span className="text-xs text-gray-400">2 hours ago</span>
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    We've added support for 5 new trading pairs including SOL/USDT and MATIC/USDT
+                  </p>
+                </div>
+                <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#3B82F6]">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">System Maintenance Complete</h3>
+                    <span className="text-xs text-gray-400">1 day ago</span>
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    Scheduled maintenance has been completed. All systems are now operational.
+                  </p>
+                </div>
+                <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#F59E0B]">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">Trading Competition</h3>
+                    <span className="text-xs text-gray-400">3 days ago</span>
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    Join our monthly trading competition with prizes up to $10,000 USDT!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -98,44 +160,11 @@ const ExchangeLayout: React.FC = () => {
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#0F172A] text-white`}>
-      <Header />
+      <Header activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <main className="flex-1 overflow-auto pb-20">
+      <main className="flex-1 overflow-auto">
         {renderContent()}
       </main>
-
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#1E293B] border-t border-gray-800">
-        <div className="flex justify-between items-center h-16 px-4">
-          <button
-            onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center justify-center ${activeTab === 'home' ? 'text-[#22C55E]' : 'text-gray-400'}`}
-          >
-            <Home size={20} />
-            <span className="text-xs mt-1">Home</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('markets')}
-            className={`flex flex-col items-center justify-center ${activeTab === 'markets' ? 'text-[#22C55E]' : 'text-gray-400'}`}
-          >
-            <BarChart2 size={20} />
-            <span className="text-xs mt-1">Markets</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('futures')}
-            className={`flex flex-col items-center justify-center ${activeTab === 'futures' ? 'text-[#22C55E]' : 'text-gray-400'}`}
-          >
-            <LineChart size={20} />
-            <span className="text-xs mt-1">Futures</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('portfolio')}
-            className={`flex flex-col items-center justify-center ${activeTab === 'portfolio' ? 'text-[#22C55E]' : 'text-gray-400'}`}
-          >
-            <Wallet size={20} />
-            <span className="text-xs mt-1">Assets</span>
-          </button>
-        </div>
-      </nav>
 
       <AuthModal 
         isOpen={showAuthModal}

@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
-import { Moon, Sun, Zap, LogOut, ChevronDown, TrendingUp, ArrowLeftRight } from 'lucide-react';
+import { Moon, Sun, Zap, LogOut, ChevronDown, TrendingUp, ArrowLeftRight, BarChart2, Wallet, HelpCircle, Bell } from 'lucide-react';
 import AuthModal from './AuthModal';
 import ConvertModal from './ConvertModal';
 import { usePositions } from '../context/PositionContext';
 import { binanceWS } from '../services/binanceWebSocket';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useUser();
   const { tokenBalances } = usePositions();
@@ -30,8 +35,7 @@ const Header: React.FC = () => {
 
   const handlePerpetualClick = () => {
     setShowFeaturesDropdown(false);
-    // Navigate to futures tab - we'll need to communicate with the layout
-    window.dispatchEvent(new CustomEvent('navigateToFutures'));
+    onTabChange('futures');
   };
 
   const handleConvertClick = () => {
@@ -83,6 +87,54 @@ const Header: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Navigation Items */}
+        <nav className="flex items-center space-x-1">
+          <button
+            onClick={() => onTabChange('markets')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'markets' 
+                ? 'bg-[#22C55E] text-white' 
+                : 'hover:bg-[#1E293B] text-gray-300'
+            }`}
+          >
+            <BarChart2 size={16} />
+            <span className="text-sm font-medium">Markets</span>
+          </button>
+          <button
+            onClick={() => onTabChange('portfolio')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'portfolio' 
+                ? 'bg-[#22C55E] text-white' 
+                : 'hover:bg-[#1E293B] text-gray-300'
+            }`}
+          >
+            <Wallet size={16} />
+            <span className="text-sm font-medium">Assets</span>
+          </button>
+          <button
+            onClick={() => onTabChange('support')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'support' 
+                ? 'bg-[#22C55E] text-white' 
+                : 'hover:bg-[#1E293B] text-gray-300'
+            }`}
+          >
+            <HelpCircle size={16} />
+            <span className="text-sm font-medium">Support Center</span>
+          </button>
+          <button
+            onClick={() => onTabChange('announcements')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'announcements' 
+                ? 'bg-[#22C55E] text-white' 
+                : 'hover:bg-[#1E293B] text-gray-300'
+            }`}
+          >
+            <Bell size={16} />
+            <span className="text-sm font-medium">Announcements</span>
+          </button>
+        </nav>
       </div>
       
       <div className="flex items-center space-x-4">
