@@ -27,15 +27,12 @@ interface BinaryTrade {
   id: string;
   symbol: string;
   type: 'call' | 'put';
-  riskAmount: number;
-  tradeAmount: number;
+  amount: number;
   entryPrice: number;
   expiryTime: Date;
   duration: number;
   status: 'active' | 'won' | 'lost';
   payout?: number;
-  currentPnl?: number;
-  currentPrice?: number;
 }
 
 const TradingSection: React.FC = () => {
@@ -66,35 +63,18 @@ const TradingSection: React.FC = () => {
         const now = new Date();
         setActiveTrades(prev => {
           const updatedTrades = prev.map(trade => {
-            // Update real-time P&L for active trades
-            if (trade.status === 'active') {
-              const currentPrice = tokenData.price;
-              let currentPnl = 0;
-              
-              if (trade.type === 'call') {
-                // For CALL: profit if current price > entry price
-                currentPnl = currentPrice > trade.entryPrice ? trade.riskAmount * 0.8 : -trade.riskAmount;
-              } else {
-                // For PUT: profit if current price < entry price
-                currentPnl = currentPrice < trade.entryPrice ? trade.riskAmount * 0.8 : -trade.riskAmount;
-              }
-              
-              trade.currentPnl = currentPnl;
-              trade.currentPrice = currentPrice;
-            }
-            
             if (trade.status === 'active' && now >= trade.expiryTime) {
               const finalPrice = tokenData.price;
               const won = trade.type === 'call' 
                 ? finalPrice > trade.entryPrice 
                 : finalPrice < trade.entryPrice;
               
-              const payout = won ? trade.riskAmount + (trade.riskAmount * 0.8) : 0; // 80% profit + original risk
+              const payout = won ? trade.amount * 1.8 : 0; // 80% payout
               
               if (won) {
-                updateUsdtBalance(trade.riskAmount * 0.8); // Only the profit
+                updateUsdtBalance(payout - trade.amount); // Net profit
               } else {
-                updateUsdtBalance(-trade.riskAmount); // Loss of risk amount
+                updateUsdtBalance(-trade.amount); // Loss
               }
 
               const completedTrade = {
@@ -137,20 +117,19 @@ const TradingSection: React.FC = () => {
   const logo = cryptoLogos[symbol];
 
   const calculateTradeAmount = (percentage: number) => {
-    // This is the risk amount (what you can lose/win)
     return portfolioBalance * percentage;
   };
 
   const handlePercentageClick = (percentage: number) => {
-    const riskAmount = calculateTradeAmount(percentage);
-    setTradeAmount(riskAmount.toFixed(2));
+    const amount = calculateTradeAmount(percentage);
+    setTradeAmount(amount.toFixed(2));
   };
 
   const handleTrade = (type: 'call' | 'put') => {
     if (!tradeAmount || parseFloat(tradeAmount) <= 0) return;
     
-    const riskAmount = parseFloat(tradeAmount);
-    if (riskAmount > portfolioBalance) {
+    const amount = parseFloat(tradeAmount);
+    if (amount > portfolioBalance) {
       alert('Insufficient balance');
       return;
     }
@@ -162,14 +141,11 @@ const TradingSection: React.FC = () => {
       id: Math.random().toString(36).substring(7),
       symbol: selectedToken,
       type,
-      riskAmount,
-      tradeAmount: portfolioBalance, // Trade with full balance
+      amount,
       entryPrice: currentPrice,
       expiryTime,
       duration: selectedTime,
-      status: 'active',
-      currentPnl: 0,
-      currentPrice: currentPrice
+      status: 'active'
     };
 
     setActiveTrades(prev => [...prev, newTrade]);
@@ -266,49 +242,20 @@ const TradingSection: React.FC = () => {
                     {trade.timeLeft ? formatTimeLeft(trade.timeLeft) : 'Expired'}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
-                    <div className="text-gray-400">Risk Amount</div>
-                    <div>{formatCurrency(trade.riskAmount)}</div>
+                    <div className="text-gray-400">Amount</div>
+                    <div>{formatCurrency(trade.amount)}</div>
                   </div>
-                  <div>
-                    <div className="text-gray-400">Trade Amount</div>
-                    <div>{formatCurrency(trade.tradeAmount)}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm mb-2">
                   <div>
                     <div className="text-gray-400">Entry</div>
                     <div>{formatCurrency(trade.entryPrice)}</div>
                   </div>
                   <div>
                     <div className="text-gray-400">Current</div>
-                    <div className={trade.currentPrice && trade.currentPrice > trade.entryPrice ? 'text-[#22C55E]' : 'text-[#EF4444]'}>
-                      {formatCurrency(trade.currentPrice || currentPrice)}
+                    <div className={currentPrice > trade.entryPrice ? 'text-[#22C55E]' : 'text-[#EF4444]'}>
+                      {formatCurrency(currentPrice)}
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">P&L</div>
-                    <div className={`font-semibold ${
-                      (trade.currentPnl || 0) >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
-                    }`}>
-                      {(trade.currentPnl || 0) >= 0 ? '+' : ''}{formatCurrency(trade.currentPnl || 0)}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-[#2D3748] rounded p-2">
-                  <div className="text-xs text-gray-400 mb-1">
-                    Prediction: Price will go {trade.type === 'call' ? 'UP' : 'DOWN'}
-                  </div>
-                  <div className={`text-sm font-medium ${
-                    trade.type === 'call' 
-                      ? (trade.currentPrice && trade.currentPrice > trade.entryPrice ? 'text-[#22C55E]' : 'text-[#EF4444]')
-                      : (trade.currentPrice && trade.currentPrice < trade.entryPrice ? 'text-[#22C55E]' : 'text-[#EF4444]')
-                  }`}>
-                    {trade.type === 'call' 
-                      ? (trade.currentPrice && trade.currentPrice > trade.entryPrice ? '✓ Winning' : '✗ Losing')
-                      : (trade.currentPrice && trade.currentPrice < trade.entryPrice ? '✓ Winning' : '✗ Losing')
-                    }
                   </div>
                 </div>
               </div>
@@ -331,23 +278,17 @@ const TradingSection: React.FC = () => {
                     {trade.status === 'won' ? 'WON' : 'LOST'}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
-                    <div className="text-gray-400">Risk Amount</div>
-                    <div>{formatCurrency(trade.riskAmount)}</div>
+                    <div className="text-gray-400">Amount</div>
+                    <div>{formatCurrency(trade.amount)}</div>
                   </div>
                   <div>
-                    <div className="text-gray-400">Trade Amount</div>
-                    <div>{formatCurrency(trade.tradeAmount)}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <div className="text-gray-400">Entry Price</div>
+                    <div className="text-gray-400">Entry</div>
                     <div>{formatCurrency(trade.entryPrice)}</div>
                   </div>
                   <div>
-                    <div className="text-gray-400">Final Payout</div>
+                    <div className="text-gray-400">Payout</div>
                     <div className={trade.status === 'won' ? 'text-[#22C55E]' : 'text-[#EF4444]'}>
                       {formatCurrency(trade.payout || 0)}
                     </div>
@@ -386,18 +327,14 @@ const TradingSection: React.FC = () => {
 
           {/* Amount input */}
           <div className="mb-4">
-            <label className="text-sm text-gray-400 mb-2 block">Risk Amount (Win/Loss)</label>
+            <label className="text-sm text-gray-400 mb-2 block">Amount</label>
             <input
               type="number"
               value={tradeAmount}
               onChange={(e) => setTradeAmount(e.target.value)}
-              placeholder="Enter risk amount"
+              placeholder="Please enter quantity"
               className="w-full bg-[#2D3748] text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] mb-2"
             />
-            
-            <div className="text-xs text-gray-400 mb-2">
-              Trade Amount: {formatCurrency(portfolioBalance)} (Full Balance)
-            </div>
             
             {/* Percentage buttons */}
             <div className="grid grid-cols-4 gap-2">
@@ -411,18 +348,11 @@ const TradingSection: React.FC = () => {
                 </button>
               ))}
             </div>
-            
-            <div className="text-xs text-gray-400 mt-2">
-              Risk: {tradeAmount ? `${formatCurrency(parseFloat(tradeAmount))} (${((parseFloat(tradeAmount) / portfolioBalance) * 100).toFixed(1)}%)` : '0%'} of portfolio
-            </div>
           </div>
 
           {/* Available balance */}
           <div className="text-sm text-gray-400 mb-4">
-            <div>Available Balance: {formatCurrency(portfolioBalance)}</div>
-            <div className="text-xs mt-1">
-              Win Payout: {tradeAmount ? `+${formatCurrency(parseFloat(tradeAmount) * 0.8)}` : '$0'} (80% profit)
-            </div>
+            Available: {formatCurrency(portfolioBalance)}
           </div>
 
           {/* CALL/PUT buttons */}
@@ -433,7 +363,7 @@ const TradingSection: React.FC = () => {
               className="bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
               <div className="text-lg font-bold">CALL</div>
-              <div className="text-sm opacity-80">80% Payout</div>
+              <div className="text-sm opacity-80">58.13%</div>
             </button>
             <button
               onClick={() => handleTrade('put')}
@@ -441,7 +371,7 @@ const TradingSection: React.FC = () => {
               className="bg-[#EF4444] hover:bg-[#DC2626] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
               <div className="text-lg font-bold">PUT</div>
-              <div className="text-sm opacity-80">80% Payout</div>
+              <div className="text-sm opacity-80">54.87%</div>
             </button>
           </div>
         </div>
