@@ -37,7 +37,7 @@ interface BinaryTrade {
 
 const TradingSection: React.FC = () => {
   const { selectedToken, setSelectedToken } = useToken();
-  const { portfolioBalance, updateUsdtBalance, tokenBalances } = usePositions();
+  const { portfolioBalance, updateUsdtBalance } = usePositions();
   const [tradeType, setTradeType] = useState<'call' | 'put'>('call');
   const [selectedTime, setSelectedTime] = useState(60);
   const [tradeAmount, setTradeAmount] = useState('');
@@ -69,8 +69,8 @@ const TradingSection: React.FC = () => {
               
               const payout = trade.amount * 1.8; // 80% payout (always win)
               
-              // Always add full payout since we always win
-              updateUsdtBalance(payout); // Full payout (original amount + profit)
+              // Always add profit since we always win
+              updateUsdtBalance(payout - trade.amount); // Net profit
 
               const completedTrade = {
                 ...trade,
