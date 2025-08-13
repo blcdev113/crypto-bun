@@ -20,11 +20,12 @@ const TradingChart: React.FC = () => {
   const candleSeriesRef = useRef<any>(null);
   const volumeSeriesRef = useRef<any>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Create chart with your custom styling
+    // Create chart with dark theme
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: 500,
@@ -49,7 +50,7 @@ const TradingChart: React.FC = () => {
       },
     });
 
-    // Add candlestick series with your colors
+    // Add candlestick series
     const candleSeries = chart.addCandlestickSeries({
       upColor: "#4bffb5",
       downColor: "#ff4976",
@@ -64,7 +65,7 @@ const TradingChart: React.FC = () => {
       color: "#26a69a",
       priceFormat: { type: "volume" },
       priceScaleId: "",
-      scaleMargins: { top: 0.8, bottom: 0 },
+      scaleMargins: { top: 0.7, bottom: 0 },
     });
 
     chartRef.current = chart;
@@ -97,46 +98,68 @@ const TradingChart: React.FC = () => {
         );
         const data = await response.json();
         
-        if (candleSeriesRef.current && volumeSeriesRef.current) {
-          const candleData = data.map((d: any) => ({
-            time: d[0] / 1000,
-            open: parseFloat(d[1]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3]),
-            close: parseFloat(d[4]),
-          }));
+        if (candleSeriesRef.current && volumeSeriesRef.current && Array.isArray(data)) {
+          // Clear existing data
+          candleSeriesRef.current.setData([]);
+          volumeSeriesRef.current.setData([]);
 
-          const volumeData = data.map((d: any) => {
-            const open = parseFloat(d[1]);
-            const close = parseFloat(d[4]);
-            const isUp = close >= open;
+          // Process candlestick data
+          const candleData = data.map((kline: any[]) => {
+            const [timestamp, open, high, low, close] = kline;
+            return {
+              time: Math.floor(timestamp / 1000), // Convert to seconds
+              open: parseFloat(open),
+              high: parseFloat(high),
+              low: parseFloat(low),
+              close: parseFloat(close),
+            };
+          });
+
+          // Process volume data
+          const volumeData = data.map((kline: any[]) => {
+            const [timestamp, open, high, low, close, volume] = kline;
+            const openPrice = parseFloat(open);
+            const closePrice = parseFloat(close);
+            const isUp = closePrice >= openPrice;
             
             return {
-              time: d[0] / 1000,
-              value: parseFloat(d[5]),
+              time: Math.floor(timestamp / 1000), // Convert to seconds
+              value: parseFloat(volume) / 1000, // Scale down volume for better display
               color: isUp ? "#4bffb5" : "#ff4976"
             };
           });
 
+          // Set the data
           candleSeriesRef.current.setData(candleData);
           volumeSeriesRef.current.setData(volumeData);
+
+          // Fit content to show all data
+          chart.timeScale().fitContent();
         }
       } catch (error) {
         console.error('Failed to fetch historical data:', error);
       }
     };
 
-    fetchHistoricalData();
+    if (selectedToken && selectedTimeframe) {
+      fetchHistoricalData();
+    }
   }, [selectedToken, selectedTimeframe]);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (throttled)
   useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
       const tokenData = data.find(token => token.symbol === selectedToken);
       if (tokenData && candleSeriesRef.current && volumeSeriesRef.current) {
-        const currentTime = Math.floor(Date.now() / 1000);
+        const now = Date.now();
         
-        // Update candlestick
+        // Throttle updates to every 5 seconds to avoid overwhelming the chart
+        if (now - lastUpdateTime < 5000) return;
+        setLastUpdateTime(now);
+
+        const currentTime = Math.floor(now / 1000);
+        
+        // Update the last candlestick with current price
         candleSeriesRef.current.update({
           time: currentTime,
           open: tokenData.price,
@@ -145,17 +168,17 @@ const TradingChart: React.FC = () => {
           close: tokenData.price,
         });
 
-        // Update volume with color based on price movement
+        // Update volume
         volumeSeriesRef.current.update({
           time: currentTime,
-          value: tokenData.volume,
-          color: "#4bffb5" // Default to green for real-time updates
+          value: (tokenData.volume || 1000) / 1000, // Scale down volume
+          color: "#4bffb5"
         });
       }
     });
 
     return () => unsubscribe();
-  }, [selectedToken]);
+  }, [selectedToken, lastUpdateTime]);
 
   return (
     <div className="bg-[#0b0f19] rounded-lg overflow-hidden">
