@@ -37,7 +37,7 @@ interface BinaryTrade {
 
 const TradingSection: React.FC = () => {
   const { selectedToken, setSelectedToken } = useToken();
-  const { portfolioBalance, updateUsdtBalance } = usePositions();
+  const { portfolioBalance, updateUsdtBalance, tokenBalances } = usePositions();
   const [tradeType, setTradeType] = useState<'call' | 'put'>('call');
   const [selectedTime, setSelectedTime] = useState(60);
   const [tradeAmount, setTradeAmount] = useState('');
