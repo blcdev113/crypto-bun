@@ -1,58 +1,86 @@
 import React from 'react';
 import Header from '../components/Header';
 import MarketTickers from '../components/MarketTickers';
+import TokenList from '../components/TokenList';
+import TradingChart from '../components/TradingChart';
+import OrderBook from '../components/OrderBook';
 import TradingSection from '../components/TradingSection';
 import Portfolio from '../components/Portfolio';
-import MobileHome from '../components/MobileHome';
-import MobileFutures from '../components/MobileFutures';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
-import { HelpCircle, Bell, Home, TrendingUp, BarChart3, Wallet, Grid3X3 } from 'lucide-react';
+import { HelpCircle, Bell } from 'lucide-react';
+import { useToken } from '../context/TokenContext';
+import { cryptoLogos } from '../utils/cryptoLogos';
 import AuthModal from '../components/AuthModal';
 
 const ExchangeLayout: React.FC = () => {
   const { theme } = useTheme();
   const { user } = useUser();
   const [activeTab, setActiveTab] = React.useState('home');
+  const { selectedToken, setSelectedToken } = useToken();
+  const [showTokenList, setShowTokenList] = React.useState(false);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
+
+  const getTokenSymbol = (symbol: string) => symbol.replace('USDT', '');
+  const symbol = getTokenSymbol(selectedToken);
+  const logo = cryptoLogos[symbol];
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
 
-  // Mobile-first navigation items
-  const mobileNavItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'markets', label: 'Markets', icon: TrendingUp },
-    { id: 'futures', label: 'Futures', icon: BarChart3 },
-    { id: 'perpetual', label: 'Perpetual', icon: Grid3X3 },
-    { id: 'portfolio', label: 'Assets', icon: Wallet }
-  ];
-
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
+        return <MarketTickers onNavigateToFutures={() => handleTabClick('futures')} />;
+      case 'markets':
         return (
-          <div className="block md:hidden">
-            <MobileHome onNavigateToFutures={() => handleTabClick('futures')} />
+          <div className="px-2 py-2">
+            <div className="bg-[#1E293B] rounded-lg p-4 relative mb-4">
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setShowTokenList(!showTokenList)}
+              >
+                <div className="flex items-center">
+                  {logo ? (
+                    <img src={logo} alt={symbol} className="w-8 h-8 rounded-full mr-3" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#22C55E] flex items-center justify-center text-white mr-3">
+                      {symbol.substring(0, 1)}
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-semibold">{symbol}/USDT</div>
+                    <div className="text-sm text-gray-400">Spot Trading</div>
+                  </div>
+                </div>
+              </div>
+
+              {showTokenList && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1E293B] rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  <TokenList onSelect={(token) => {
+                    setSelectedToken(token);
+                    setShowTokenList(false);
+                  }} />
+                </div>
+              )}
+            </div>
+            <TradingChart />
+            <OrderBook />
           </div>
         );
-      case 'markets':
-        return <MarketTickers onNavigateToFutures={() => handleTabClick('futures')} />;
       case 'futures':
         return (
-          <div className="block md:hidden">
-            <MobileFutures />
-          </div>
-        );
-      case 'perpetual':
-        return (
-          <div className="block md:hidden">
-            <MobileFutures />
+          <div className="px-2 py-2">
+            <TradingSection />
           </div>
         );
       case 'portfolio':
-        return <Portfolio />;
+        return (
+          <div className="px-2 py-2">
+            <Portfolio />
+          </div>
+        );
       case 'support':
         return (
           <div className="px-4 py-6">
@@ -131,36 +159,12 @@ const ExchangeLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0F172A] text-white overflow-x-hidden">
-      {/* Desktop Header - Hidden on mobile */}
-      <div className="hidden md:block">
-        <Header activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
+    <div className={`min-h-screen flex flex-col bg-[#0F172A] text-white overflow-x-hidden`}>
+      <Header activeTab={activeTab} onTabChange={setActiveTab} />
       
-      {/* Mobile Content */}
-      <main className="flex-1 overflow-auto min-h-0 pb-16 md:pb-0">
+      <main className="flex-1 overflow-auto min-h-0">
         {renderContent()}
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#1E293B] border-t border-gray-800 md:hidden z-50">
-        <div className="flex items-center justify-around py-2">
-          {mobileNavItems.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => handleTabClick(id)}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-                activeTab === id 
-                  ? 'text-[#22C55E]' 
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              <Icon size={20} />
-              <span className="text-xs mt-1">{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       <AuthModal 
         isOpen={showAuthModal}
