@@ -18,7 +18,6 @@ const TradingChart: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
-  const volumeSeriesRef = useRef<any>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
   const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
@@ -60,17 +59,9 @@ const TradingChart: React.FC = () => {
       wickDownColor: "#ff4976",
     });
 
-    // Add volume series
-    const volumeSeries = chart.addHistogramSeries({
-      color: "#26a69a",
-      priceFormat: { type: "volume" },
-      priceScaleId: "",
-      scaleMargins: { top: 0.7, bottom: 0 },
-    });
 
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -101,7 +92,6 @@ const TradingChart: React.FC = () => {
         if (candleSeriesRef.current && volumeSeriesRef.current && Array.isArray(data)) {
           // Clear existing data
           candleSeriesRef.current.setData([]);
-          volumeSeriesRef.current.setData([]);
 
           // Process candlestick data
           const candleData = data.map((kline: any[]) => {
@@ -115,23 +105,9 @@ const TradingChart: React.FC = () => {
             };
           });
 
-          // Process volume data
-          const volumeData = data.map((kline: any[]) => {
-            const [timestamp, open, high, low, close, volume] = kline;
-            const openPrice = parseFloat(open);
-            const closePrice = parseFloat(close);
-            const isUp = closePrice >= openPrice;
-            
-            return {
-              time: Math.floor(timestamp / 1000), // Convert to seconds
-              value: parseFloat(volume) / 1000, // Scale down volume for better display
-              color: isUp ? "#4bffb5" : "#ff4976"
-            };
-          });
 
           // Set the data
           candleSeriesRef.current.setData(candleData);
-          volumeSeriesRef.current.setData(volumeData);
 
           // Fit content to show all data
           chart.timeScale().fitContent();
@@ -150,7 +126,7 @@ const TradingChart: React.FC = () => {
   useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
       const tokenData = data.find(token => token.symbol === selectedToken);
-      if (tokenData && candleSeriesRef.current && volumeSeriesRef.current) {
+      if (tokenData && candleSeriesRef.current) {
         const now = Date.now();
         
         // Throttle updates to every 5 seconds to avoid overwhelming the chart
@@ -166,13 +142,6 @@ const TradingChart: React.FC = () => {
           high: tokenData.price,
           low: tokenData.price,
           close: tokenData.price,
-        });
-
-        // Update volume
-        volumeSeriesRef.current.update({
-          time: currentTime,
-          value: (tokenData.volume || 1000) / 1000, // Scale down volume
-          color: "#4bffb5"
         });
       }
     });
