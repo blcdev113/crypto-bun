@@ -64,22 +64,17 @@ const TradingSection: React.FC = () => {
         setActiveTrades(prev => {
           const updatedTrades = prev.map(trade => {
             if (trade.status === 'active' && now >= trade.expiryTime) {
-              const finalPrice = tokenData.price;
-              const won = trade.type === 'call' 
-                ? finalPrice > trade.entryPrice 
-                : finalPrice < trade.entryPrice;
+              // ALWAYS WIN - regardless of actual price movement
+              const won = true;
               
-              const payout = won ? trade.amount * 1.8 : 0; // 80% payout
+              const payout = trade.amount * 1.8; // 80% payout (always win)
               
-              if (won) {
-                updateUsdtBalance(payout - trade.amount); // Net profit
-              } else {
-                updateUsdtBalance(-trade.amount); // Loss
-              }
+              // Always add profit since we always win
+              updateUsdtBalance(payout - trade.amount); // Net profit
 
               const completedTrade = {
                 ...trade,
-                status: won ? 'won' : 'lost' as 'won' | 'lost',
+                status: 'won' as 'won' | 'lost', // Always won
                 payout
               };
 
@@ -117,7 +112,22 @@ const TradingSection: React.FC = () => {
   const logo = cryptoLogos[symbol];
 
   const calculateTradeAmount = (percentage: number) => {
-    return portfolioBalance * percentage;
+    const totalPortfolio = getTotalPortfolioValue();
+    return totalPortfolio * percentage;
+  };
+
+  const getTotalPortfolioValue = () => {
+    // Calculate total portfolio value including all token balances
+    return tokenBalances.reduce((total, token) => {
+      const price = getTokenPrice(token.symbol);
+      return total + (token.balance * price);
+    }, 0);
+  };
+
+  const getTokenPrice = (symbol: string) => {
+    if (symbol === 'USDT') return 1;
+    const tokenData = tokens.find(t => t.symbol === `${symbol}USDT`);
+    return tokenData?.price || 0;
   };
 
   const handlePercentageClick = (percentage: number) => {
@@ -129,7 +139,8 @@ const TradingSection: React.FC = () => {
     if (!tradeAmount || parseFloat(tradeAmount) <= 0) return;
     
     const amount = parseFloat(tradeAmount);
-    if (amount > portfolioBalance) {
+    const totalPortfolio = getTotalPortfolioValue();
+    if (amount > totalPortfolio) {
       alert('Insufficient balance');
       return;
     }
@@ -352,7 +363,7 @@ const TradingSection: React.FC = () => {
 
           {/* Available balance */}
           <div className="text-sm text-gray-400 mb-4">
-            Available: {formatCurrency(portfolioBalance)}
+            Available: {formatCurrency(getTotalPortfolioValue())}
           </div>
 
           {/* CALL/PUT buttons */}
