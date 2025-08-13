@@ -51,9 +51,37 @@ const TradingSection: React.FC = () => {
   const [tradeHistory, setTradeHistory] = useState<BinaryTrade[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'active' | 'history'>('pending');
-  const [scheduledTime, setScheduledTime] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [selectedScheduledTime, setSelectedScheduledTime] = useState('');
   const [pendingTrades, setPendingTrades] = useState<BinaryTrade[]>([]);
+
+  // Generate time options for the next hour
+  const generateTimeOptions = () => {
+    const now = new Date();
+    const options = [];
+    
+    // Start from next 5-minute interval
+    const nextInterval = new Date(now);
+    nextInterval.setMinutes(Math.ceil(now.getMinutes() / 5) * 5, 0, 0);
+    
+    // Generate 12 options (next hour in 5-minute intervals)
+    for (let i = 0; i < 12; i++) {
+      const time = new Date(nextInterval.getTime() + (i * 5 * 60 * 1000));
+      const timeString = time.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      options.push({
+        value: time.toISOString(),
+        label: timeString,
+        time: time
+      });
+    }
+    
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
@@ -161,8 +189,8 @@ const TradingSection: React.FC = () => {
 
   const handleTrade = (type: 'call' | 'put') => {
     if (!tradeAmount || parseFloat(tradeAmount) <= 0) return;
-    if (!scheduledTime || !scheduledDate) {
-      alert('Please select date and time for the trade');
+    if (!selectedScheduledTime) {
+      alert('Please select a time for the trade');
       return;
     }
     
@@ -173,8 +201,8 @@ const TradingSection: React.FC = () => {
       return;
     }
 
-    // Parse scheduled date and time
-    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+    // Parse scheduled time
+    const scheduledDateTime = new Date(selectedScheduledTime);
     const now = new Date();
     
     if (scheduledDateTime <= now) {
@@ -196,6 +224,7 @@ const TradingSection: React.FC = () => {
 
     setPendingTrades(prev => [...prev, newTrade]);
     setTradeAmount('');
+    setSelectedScheduledTime('');
   };
 
   const formatTimeLeft = (timeLeft: number) => {
@@ -414,24 +443,21 @@ const TradingSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Scheduled Time */}
+          {/* Scheduled Time Selection */}
           <div className="mb-4">
-            <label className="text-sm text-gray-400 mb-2 block">Schedule Trade</label>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
-              />
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
-              />
-            </div>
+            <label className="text-sm text-gray-400 mb-2 block">Schedule Time (Next Hour)</label>
+            <select
+              value={selectedScheduledTime}
+              onChange={(e) => setSelectedScheduledTime(e.target.value)}
+              className="w-full bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
+            >
+              <option value="">Select time to start trade</option>
+              {timeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <div className="text-xs text-gray-500 mt-1">
               Trade will start at the scheduled time and run for {selectedTime}s
             </div>
@@ -471,7 +497,7 @@ const TradingSection: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => handleTrade('call')}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !scheduledTime || !scheduledDate}
+              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !selectedScheduledTime}
               className="bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
               <div className="text-lg font-bold">SCHEDULE CALL</div>
@@ -479,7 +505,7 @@ const TradingSection: React.FC = () => {
             </button>
             <button
               onClick={() => handleTrade('put')}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !scheduledTime || !scheduledDate}
+              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !selectedScheduledTime}
               className="bg-[#EF4444] hover:bg-[#DC2626] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
               <div className="text-lg font-bold">SCHEDULE PUT</div>
