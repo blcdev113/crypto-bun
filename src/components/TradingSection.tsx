@@ -31,8 +31,9 @@ interface BinaryTrade {
   entryPrice: number;
   expiryTime: Date;
   duration: number;
-  status: 'active' | 'won' | 'lost';
+  status: 'pending' | 'active' | 'won' | 'lost';
   payout?: number;
+  scheduledTime?: Date;
 }
 
 const TradingSection: React.FC = () => {
@@ -49,7 +50,10 @@ const TradingSection: React.FC = () => {
   const [activeTrades, setActiveTrades] = useState<BinaryTrade[]>([]);
   const [tradeHistory, setTradeHistory] = useState<BinaryTrade[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [activeTab, setActiveTab] = useState<'pending' | 'active' | 'history'>('pending');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [pendingTrades, setPendingTrades] = useState<BinaryTrade[]>([]);
 
   useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
@@ -61,6 +65,26 @@ const TradingSection: React.FC = () => {
 
         // Check for trade expirations
         const now = new Date();
+        
+        // Check for pending trades that should start
+        setPendingTrades(prev => {
+          const updatedPending = prev.filter(trade => {
+            if (trade.scheduledTime && now >= trade.scheduledTime) {
+              // Move to active trades
+              const activeTrade = {
+                ...trade,
+                status: 'active' as const,
+                entryPrice: currentPrice,
+                expiryTime: new Date(now.getTime() + trade.duration * 1000)
+              };
+              setActiveTrades(prevActive => [...prevActive, activeTrade]);
+              return false; // Remove from pending
+            }
+            return true; // Keep in pending
+          });
+          return updatedPending;
+        });
+        
         setActiveTrades(prev => {
           const updatedTrades = prev.map(trade => {
             if (trade.status === 'active' && now >= trade.expiryTime) {
@@ -137,6 +161,10 @@ const TradingSection: React.FC = () => {
 
   const handleTrade = (type: 'call' | 'put') => {
     if (!tradeAmount || parseFloat(tradeAmount) <= 0) return;
+    if (!scheduledTime || !scheduledDate) {
+      alert('Please select date and time for the trade');
+      return;
+    }
     
     const amount = parseFloat(tradeAmount);
     const totalPortfolio = getTotalPortfolioValue();
@@ -145,21 +173,28 @@ const TradingSection: React.FC = () => {
       return;
     }
 
+    // Parse scheduled date and time
+    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
     const now = new Date();
-    const expiryTime = new Date(now.getTime() + selectedTime * 1000);
+    
+    if (scheduledDateTime <= now) {
+      alert('Scheduled time must be in the future');
+      return;
+    }
 
     const newTrade: BinaryTrade = {
       id: Math.random().toString(36).substring(7),
       symbol: selectedToken,
       type,
       amount,
-      entryPrice: currentPrice,
-      expiryTime,
+      entryPrice: 0, // Will be set when trade activates
+      expiryTime: new Date(), // Will be set when trade activates
       duration: selectedTime,
-      status: 'active'
+      status: 'pending',
+      scheduledTime: scheduledDateTime
     };
 
-    setActiveTrades(prev => [...prev, newTrade]);
+    setPendingTrades(prev => [...prev, newTrade]);
     setTradeAmount('');
   };
 
@@ -224,6 +259,12 @@ const TradingSection: React.FC = () => {
         <div className="border-t border-gray-800">
           <div className="flex border-b border-gray-800">
             <button
+              className={`flex-1 p-4 text-sm ${activeTab === 'pending' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('pending')}
+            >
+              Pending ({pendingTrades.length})
+            </button>
+            <button
               className={`flex-1 p-4 text-sm ${activeTab === 'active' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
               onClick={() => setActiveTab('active')}
             >
@@ -238,6 +279,43 @@ const TradingSection: React.FC = () => {
           </div>
 
           <div className="p-4 max-h-48 overflow-y-auto">
+            {activeTab === 'pending' && pendingTrades.map(trade => (
+              <div key={trade.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      trade.type === 'call' ? 'bg-[#22C55E] text-white' : 'bg-[#EF4444] text-white'
+                    }`}>
+                      {trade.type.toUpperCase()}
+                    </span>
+                    <span className="ml-2 text-sm">{getTokenSymbol(trade.symbol)}</span>
+                  </div>
+                  <div className="text-sm text-yellow-500 font-medium">
+                    SCHEDULED
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <div className="text-gray-400">Amount</div>
+                    <div>{formatCurrency(trade.amount)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-400">Duration</div>
+                    <div>{trade.duration}s</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-400">Start Time</div>
+                    <div className="text-yellow-500">
+                      {trade.scheduledTime?.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
             {activeTab === 'active' && activeTrades.map(trade => (
               <div key={trade.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
                 <div className="flex justify-between items-center mb-2">
@@ -336,6 +414,29 @@ const TradingSection: React.FC = () => {
             </div>
           </div>
 
+          {/* Scheduled Time */}
+          <div className="mb-4">
+            <label className="text-sm text-gray-400 mb-2 block">Schedule Trade</label>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
+              />
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className="bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
+              />
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Trade will start at the scheduled time and run for {selectedTime}s
+            </div>
+          </div>
+
           {/* Amount input */}
           <div className="mb-4">
             <label className="text-sm text-gray-400 mb-2 block">Amount</label>
@@ -370,18 +471,18 @@ const TradingSection: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => handleTrade('call')}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !scheduledTime || !scheduledDate}
               className="bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
-              <div className="text-lg font-bold">CALL</div>
+              <div className="text-lg font-bold">SCHEDULE CALL</div>
               <div className="text-sm opacity-80">58.13%</div>
             </button>
             <button
               onClick={() => handleTrade('put')}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
+              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !scheduledTime || !scheduledDate}
               className="bg-[#EF4444] hover:bg-[#DC2626] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
-              <div className="text-lg font-bold">PUT</div>
+              <div className="text-lg font-bold">SCHEDULE PUT</div>
               <div className="text-sm opacity-80">54.87%</div>
             </button>
           </div>
