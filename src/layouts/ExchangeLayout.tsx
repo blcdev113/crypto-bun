@@ -159,10 +159,10 @@ const ExchangeLayout: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#0F172A] text-white`}>
+    <div className={`min-h-screen flex flex-col bg-[#0F172A] text-white overflow-x-hidden`}>
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto min-h-0">
         {renderContent()}
       </main>
 

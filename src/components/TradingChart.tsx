@@ -27,7 +27,7 @@ const TradingChart: React.FC = () => {
     // Create chart with dark theme
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: window.innerWidth < 768 ? 300 : 500,
       layout: {
         background: { color: "#0b0f19" },
         textColor: "#d1d4dc",
@@ -66,8 +66,10 @@ const TradingChart: React.FC = () => {
     // Handle resize
     const handleResize = () => {
       if (chartContainerRef.current) {
+        const height = window.innerWidth < 768 ? 300 : 500;
         chart.applyOptions({
           width: chartContainerRef.current.clientWidth,
+          height: height,
         });
       }
     };

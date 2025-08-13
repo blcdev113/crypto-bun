@@ -50,8 +50,8 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
       </div>
 
       {/* Market Overview */}
-      <div className="px-4 py-2">
-        <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="px-2 md:px-4 py-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
           {sortedTokens.filter(token => ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].includes(token.symbol)).map((token) => {
             const symbol = getTokenSymbol(token.symbol);
             const logo = cryptoLogos[symbol];
@@ -77,7 +77,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
             return (
               <div 
                 key={token.symbol}
-                className={`p-4 rounded-lg transition-colors relative overflow-hidden ${
+                className={`p-3 md:p-4 rounded-lg transition-colors relative overflow-hidden ${
                   isPositive 
                     ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
                     : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
@@ -103,26 +103,26 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
                         <img 
                           src={logo} 
                           alt={symbol} 
-                          className="w-8 h-8 rounded-full mr-2"
+                          className="w-6 h-6 md:w-8 md:h-8 rounded-full mr-2"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-sm font-bold mr-2">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-xs md:text-sm font-bold mr-2">
                           {symbol.substring(0, 1)}
                         </div>
                       )}
                       <div>
-                        <div className="text-white font-semibold text-sm">
+                        <div className="text-white font-semibold text-xs md:text-sm">
                           {symbol}USDT
                         </div>
                       </div>
                     </div>
-                    <div className="text-white text-xs font-medium">
+                    <div className="text-white text-xs md:text-sm font-medium">
                       {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
                     </div>
                   </div>
                   
                   <div className="text-white">
-                    <div className="text-lg font-bold">
+                    <div className="text-sm md:text-lg font-bold">
                       {token.price < 1 
                         ? token.price.toFixed(6)
                         : token.price.toLocaleString('en-US', {
@@ -139,7 +139,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
         </div>
 
         {/* Add TRX and XRP cards */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
           {sortedTokens.filter(token => ['TRXUSDT', 'XRPUSDT'].includes(token.symbol)).map((token) => {
             const symbol = getTokenSymbol(token.symbol);
             const logo = cryptoLogos[symbol];
@@ -165,7 +165,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
             return (
               <div 
                 key={token.symbol}
-                className={`p-4 rounded-lg transition-colors relative overflow-hidden ${
+                className={`p-3 md:p-4 rounded-lg transition-colors relative overflow-hidden ${
                   isPositive 
                     ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
                     : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
@@ -191,26 +191,26 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
                         <img 
                           src={logo} 
                           alt={symbol} 
-                          className="w-8 h-8 rounded-full mr-2"
+                          className="w-6 h-6 md:w-8 md:h-8 rounded-full mr-2"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-sm font-bold mr-2">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-xs md:text-sm font-bold mr-2">
                           {symbol.substring(0, 1)}
                         </div>
                       )}
                       <div>
-                        <div className="text-white font-semibold text-sm">
+                        <div className="text-white font-semibold text-xs md:text-sm">
                           {symbol}USDT
                         </div>
                       </div>
                     </div>
-                    <div className="text-white text-xs font-medium">
+                    <div className="text-white text-xs md:text-sm font-medium">
                       {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
                     </div>
                   </div>
                   
                   <div className="text-white">
-                    <div className="text-lg font-bold">
+                    <div className="text-sm md:text-lg font-bold">
                       {token.price < 1 
                         ? token.price.toFixed(6)
                         : token.price.toLocaleString('en-US', {
@@ -309,7 +309,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
                     </div>
                     <button
                       onClick={() => handleTrade(token.symbol)}
-                      className="mt-1 bg-[#22C55E] hover:bg-[#16A34A] text-white px-3 py-1 rounded text-sm"
+                      className="mt-1 bg-[#22C55E] hover:bg-[#16A34A] text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm"
                     >
                       Trade
                     </button>

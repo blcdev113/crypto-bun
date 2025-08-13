@@ -246,70 +246,70 @@ const TradingSection: React.FC = () => {
     .sort((a, b) => (b.price * b.volume) - (a.price * a.volume));
 
   return (
-    <div className="flex h-full bg-[#0F172A]">
+    <div className="flex flex-col lg:flex-row h-full bg-[#0F172A]">
       {/* Left side - Chart */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Token selector and price info */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between p-2 md:p-4 border-b border-gray-800">
           <button 
             onClick={() => setShowTokenSelector(true)}
-            className="flex items-center space-x-2 hover:bg-[#1E293B] p-2 rounded-lg transition-colors"
+            className="flex items-center space-x-2 hover:bg-[#1E293B] p-1 md:p-2 rounded-lg transition-colors"
           >
             <div className="flex items-center">
               {logo ? (
-                <img src={logo} alt={symbol} className="w-8 h-8 rounded-full mr-2" />
+                <img src={logo} alt={symbol} className="w-6 h-6 md:w-8 md:h-8 rounded-full mr-2" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#22C55E] flex items-center justify-center text-white mr-2">
+                <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#22C55E] flex items-center justify-center text-white mr-2 text-sm">
                   {symbol[0]}
                 </div>
               )}
               <div>
-                <div className="font-semibold">{symbol} / USDT</div>
-                <div className={`text-sm ${priceChange >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                <div className="font-semibold text-sm md:text-base">{symbol} / USDT</div>
+                <div className={`text-xs md:text-sm ${priceChange >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
                 </div>
               </div>
             </div>
-            <ChevronDown size={20} className="text-gray-400" />
+            <ChevronDown size={16} className="md:w-5 md:h-5 text-gray-400" />
           </button>
           
           <div className="text-right">
-            <div className="text-2xl font-bold">{formatCurrency(currentPrice)}</div>
-            <div className="text-sm text-gray-400">${formatCurrency(currentPrice)}</div>
+            <div className="text-lg md:text-2xl font-bold">{formatCurrency(currentPrice)}</div>
+            <div className="text-xs md:text-sm text-gray-400">${formatCurrency(currentPrice)}</div>
           </div>
         </div>
 
         {/* Chart */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-2 md:p-4 min-h-0">
           <TradingChart />
         </div>
 
         {/* Active trades and history */}
-        <div className="border-t border-gray-800">
+        <div className="border-t border-gray-800 lg:max-h-64 lg:overflow-y-auto">
           <div className="flex border-b border-gray-800">
             <button
-              className={`flex-1 p-4 text-sm ${activeTab === 'pending' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+              className={`flex-1 p-2 md:p-4 text-xs md:text-sm ${activeTab === 'pending' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
               onClick={() => setActiveTab('pending')}
             >
               Pending ({pendingTrades.length})
             </button>
             <button
-              className={`flex-1 p-4 text-sm ${activeTab === 'active' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+              className={`flex-1 p-2 md:p-4 text-xs md:text-sm ${activeTab === 'active' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
               onClick={() => setActiveTab('active')}
             >
               Active Trades ({activeTrades.length})
             </button>
             <button
-              className={`flex-1 p-4 text-sm ${activeTab === 'history' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+              className={`flex-1 p-2 md:p-4 text-xs md:text-sm ${activeTab === 'history' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
               onClick={() => setActiveTab('history')}
             >
               History ({tradeHistory.length})
             </button>
           </div>
 
-          <div className="p-4 max-h-48 overflow-y-auto">
+          <div className="p-2 md:p-4 max-h-32 md:max-h-48 overflow-y-auto">
             {activeTab === 'pending' && pendingTrades.map(trade => (
-              <div key={trade.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div key={trade.id} className="bg-[#1E293B] p-2 md:p-4 rounded-lg mb-2">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -317,13 +317,13 @@ const TradingSection: React.FC = () => {
                     }`}>
                       {trade.type.toUpperCase()}
                     </span>
-                    <span className="ml-2 text-sm">{getTokenSymbol(trade.symbol)}</span>
+                    <span className="ml-2 text-xs md:text-sm">{getTokenSymbol(trade.symbol)}</span>
                   </div>
                   <div className="text-sm text-yellow-500 font-medium">
                     SCHEDULED
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="grid grid-cols-3 gap-2 text-xs md:text-sm">
                   <div>
                     <div className="text-gray-400">Amount</div>
                     <div>{formatCurrency(trade.amount)}</div>
@@ -346,7 +346,7 @@ const TradingSection: React.FC = () => {
             ))}
 
             {activeTab === 'active' && activeTrades.map(trade => (
-              <div key={trade.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div key={trade.id} className="bg-[#1E293B] p-2 md:p-4 rounded-lg mb-2">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -354,13 +354,13 @@ const TradingSection: React.FC = () => {
                     }`}>
                       {trade.type.toUpperCase()}
                     </span>
-                    <span className="ml-2 text-sm">{getTokenSymbol(trade.symbol)}</span>
+                    <span className="ml-2 text-xs md:text-sm">{getTokenSymbol(trade.symbol)}</span>
                   </div>
                   <div className="text-sm text-gray-400">
                     {trade.timeLeft ? formatTimeLeft(trade.timeLeft) : 'Expired'}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="grid grid-cols-3 gap-2 text-xs md:text-sm">
                   <div>
                     <div className="text-gray-400">Amount</div>
                     <div>{formatCurrency(trade.amount)}</div>
@@ -380,7 +380,7 @@ const TradingSection: React.FC = () => {
             ))}
 
             {activeTab === 'history' && tradeHistory.map(trade => (
-              <div key={trade.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div key={trade.id} className="bg-[#1E293B] p-2 md:p-4 rounded-lg mb-2">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -388,7 +388,7 @@ const TradingSection: React.FC = () => {
                     }`}>
                       {trade.type.toUpperCase()}
                     </span>
-                    <span className="ml-2 text-sm">{getTokenSymbol(trade.symbol)}</span>
+                    <span className="ml-2 text-xs md:text-sm">{getTokenSymbol(trade.symbol)}</span>
                   </div>
                   <div className={`text-sm font-medium ${
                     trade.status === 'won' ? 'text-[#22C55E]' : 'text-[#EF4444]'
@@ -396,7 +396,7 @@ const TradingSection: React.FC = () => {
                     {trade.status === 'won' ? 'WON' : 'LOST'}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="grid grid-cols-3 gap-2 text-xs md:text-sm">
                   <div>
                     <div className="text-gray-400">Amount</div>
                     <div>{formatCurrency(trade.amount)}</div>
@@ -419,19 +419,19 @@ const TradingSection: React.FC = () => {
       </div>
 
       {/* Right side - Trading panel */}
-      <div className="w-80 border-l border-gray-800 bg-[#1E293B] flex flex-col">
-        <div className="p-4 border-b border-gray-800">
-          <h3 className="text-lg font-semibold mb-4">Trade</h3>
+      <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-800 bg-[#1E293B] flex flex-col">
+        <div className="p-2 md:p-4 border-b border-gray-800">
+          <h3 className="text-base md:text-lg font-semibold mb-4">Trade</h3>
           
           {/* Time selection */}
           <div className="mb-4">
-            <label className="text-sm text-gray-400 mb-2 block">Time</label>
-            <div className="grid grid-cols-4 gap-2">
+            <label className="text-xs md:text-sm text-gray-400 mb-2 block">Time</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {TIME_OPTIONS.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setSelectedTime(option.value)}
-                  className={`p-2 rounded text-sm font-medium transition-colors ${
+                  className={`p-2 rounded text-xs md:text-sm font-medium transition-colors ${
                     selectedTime === option.value
                       ? 'bg-[#22C55E] text-white'
                       : 'bg-[#2D3748] text-gray-300 hover:bg-[#374151]'
@@ -445,11 +445,11 @@ const TradingSection: React.FC = () => {
 
           {/* Scheduled Time Selection */}
           <div className="mb-4">
-            <label className="text-sm text-gray-400 mb-2 block">Schedule Time (Next Hour)</label>
+            <label className="text-xs md:text-sm text-gray-400 mb-2 block">Schedule Time (Next Hour)</label>
             <select
               value={selectedScheduledTime}
               onChange={(e) => setSelectedScheduledTime(e.target.value)}
-              className="w-full bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-sm"
+              className="w-full bg-[#2D3748] text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] text-xs md:text-sm"
             >
               <option value="">Select time to start trade</option>
               {timeOptions.map((option) => (
@@ -465,22 +465,22 @@ const TradingSection: React.FC = () => {
 
           {/* Amount input */}
           <div className="mb-4">
-            <label className="text-sm text-gray-400 mb-2 block">Amount</label>
+            <label className="text-xs md:text-sm text-gray-400 mb-2 block">Amount</label>
             <input
               type="number"
               value={tradeAmount}
               onChange={(e) => setTradeAmount(e.target.value)}
               placeholder="Please enter quantity"
-              className="w-full bg-[#2D3748] text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] mb-2"
+              className="w-full bg-[#2D3748] text-white p-2 md:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E] mb-2 text-sm"
             />
             
             {/* Percentage buttons */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {AMOUNT_PERCENTAGES.map(option => (
                 <button
                   key={option.value}
                   onClick={() => handlePercentageClick(option.value)}
-                  className="bg-[#2D3748] hover:bg-[#374151] text-gray-300 p-2 rounded text-sm transition-colors"
+                  className="bg-[#2D3748] hover:bg-[#374151] text-gray-300 p-2 rounded text-xs md:text-sm transition-colors"
                 >
                   {option.label}
                 </button>
@@ -489,35 +489,35 @@ const TradingSection: React.FC = () => {
           </div>
 
           {/* Available balance */}
-          <div className="text-sm text-gray-400 mb-4">
+          <div className="text-xs md:text-sm text-gray-400 mb-4">
             Available: {formatCurrency(getTotalPortfolioValue())}
           </div>
 
           {/* CALL/PUT buttons */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             <button
               onClick={() => handleTrade('call')}
               disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !selectedScheduledTime}
-              className="bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
+              className="bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-3 md:p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
-              <div className="text-lg font-bold">SCHEDULE CALL</div>
-              <div className="text-sm opacity-80">58.13%</div>
+              <div className="text-sm md:text-lg font-bold">SCHEDULE CALL</div>
+              <div className="text-xs md:text-sm opacity-80">58.13%</div>
             </button>
             <button
               onClick={() => handleTrade('put')}
               disabled={!tradeAmount || parseFloat(tradeAmount) <= 0 || !selectedScheduledTime}
-              className="bg-[#EF4444] hover:bg-[#DC2626] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
+              className="bg-[#EF4444] hover:bg-[#DC2626] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-3 md:p-4 rounded-lg font-medium transition-all duration-200 flex flex-col items-center"
             >
-              <div className="text-lg font-bold">SCHEDULE PUT</div>
-              <div className="text-sm opacity-80">54.87%</div>
+              <div className="text-sm md:text-lg font-bold">SCHEDULE PUT</div>
+              <div className="text-xs md:text-sm opacity-80">54.87%</div>
             </button>
           </div>
         </div>
 
         {/* Assets section */}
-        <div className="p-4">
-          <h4 className="text-sm font-medium text-gray-400 mb-2">Assets</h4>
-          <div className="text-lg font-semibold">{formatCurrency(portfolioBalance)}</div>
+        <div className="p-2 md:p-4">
+          <h4 className="text-xs md:text-sm font-medium text-gray-400 mb-2">Assets</h4>
+          <div className="text-base md:text-lg font-semibold">{formatCurrency(portfolioBalance)}</div>
         </div>
       </div>
 
