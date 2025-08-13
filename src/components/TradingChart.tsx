@@ -89,7 +89,7 @@ const TradingChart: React.FC = () => {
         );
         const data = await response.json();
         
-        if (candleSeriesRef.current && volumeSeriesRef.current && Array.isArray(data)) {
+        if (candleSeriesRef.current && Array.isArray(data)) {
           // Clear existing data
           candleSeriesRef.current.setData([]);
 
@@ -110,7 +110,7 @@ const TradingChart: React.FC = () => {
           candleSeriesRef.current.setData(candleData);
 
           // Fit content to show all data
-          chart.timeScale().fitContent();
+          chartRef.current.timeScale().fitContent();
         }
       } catch (error) {
         console.error('Failed to fetch historical data:', error);
