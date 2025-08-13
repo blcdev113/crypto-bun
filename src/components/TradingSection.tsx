@@ -69,8 +69,8 @@ const TradingSection: React.FC = () => {
               
               const payout = trade.amount * 1.8; // 80% payout (always win)
               
-              // Always add profit since we always win
-              updateUsdtBalance(payout - trade.amount); // Net profit
+              // Always add full payout since we always win
+              updateUsdtBalance(payout); // Full payout (original amount + profit)
 
               const completedTrade = {
                 ...trade,
