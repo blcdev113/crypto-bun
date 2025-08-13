@@ -62,16 +62,16 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
 
   return (
     <header className="bg-[#0F172A] text-white py-4 px-6 flex items-center justify-between border-b border-gray-800 relative">
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4">
         <button 
           onClick={() => onTabChange('home')}
-          className="flex items-center space-x-2 hover:bg-[#1E293B] p-2 rounded-lg transition-colors"
+          className="flex items-center space-x-1 md:space-x-2 hover:bg-[#1E293B] p-1 md:p-2 rounded-lg transition-colors"
         >
-          <Zap className="w-8 h-8 text-[#22C55E]" />
-          <h1 className="text-2xl font-bold">TX</h1>
+          <Zap className="w-6 h-6 md:w-8 md:h-8 text-[#22C55E]" />
+          <h1 className="text-xl md:text-2xl font-bold">TX</h1>
         </button>
         
-        <div className="relative">
+        <div className="relative hidden md:block">
           <button
             onClick={() => setShowFeaturesDropdown(!showFeaturesDropdown)}
             className="flex items-center space-x-2 bg-[#1E293B] hover:bg-[#2D3748] px-4 py-2 rounded-lg transition-colors"
@@ -109,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex items-center space-x-1">
+        <nav className="flex items-center space-x-1 overflow-x-auto">
           <button
             onClick={() => onTabChange('markets')}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
@@ -118,8 +118,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 : 'hover:bg-[#1E293B] text-gray-300'
             }`}
           >
-            <BarChart2 size={16} />
-            <span className="text-sm font-medium">Markets</span>
+            <BarChart2 size={14} className="md:w-4 md:h-4" />
+            <span className="text-xs md:text-sm font-medium hidden sm:inline">Markets</span>
           </button>
           <button
             onClick={() => onTabChange('portfolio')}
@@ -129,37 +129,37 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                 : 'hover:bg-[#1E293B] text-gray-300'
             }`}
           >
-            <Wallet size={16} />
-            <span className="text-sm font-medium">Assets</span>
+            <Wallet size={14} className="md:w-4 md:h-4" />
+            <span className="text-xs md:text-sm font-medium hidden sm:inline">Assets</span>
           </button>
           <button
             onClick={() => onTabChange('support')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex items-center space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors ${
               activeTab === 'support' 
                 ? 'bg-[#22C55E] text-white' 
                 : 'hover:bg-[#1E293B] text-gray-300'
             }`}
           >
-            <HelpCircle size={16} />
-            <span className="text-sm font-medium">Support Center</span>
+            <HelpCircle size={14} className="md:w-4 md:h-4" />
+            <span className="text-xs md:text-sm font-medium hidden lg:inline">Support</span>
           </button>
           <button
             onClick={() => onTabChange('announcements')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex items-center space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors ${
               activeTab === 'announcements' 
                 ? 'bg-[#22C55E] text-white' 
                 : 'hover:bg-[#1E293B] text-gray-300'
             }`}
           >
-            <Bell size={16} />
-            <span className="text-sm font-medium">Announcements</span>
+            <Bell size={14} className="md:w-4 md:h-4" />
+            <span className="text-xs md:text-sm font-medium hidden lg:inline">News</span>
           </button>
         </nav>
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4">
         {/* Download with QR Code */}
-        <div className="relative">
+        <div className="relative hidden md:block">
           <button
             onMouseEnter={() => setShowDownloadQR(true)}
             onMouseLeave={() => setShowDownloadQR(false)}
@@ -188,20 +188,20 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
 
         {/* Auth Buttons or User Info */}
         {user && user.email !== 'demo@cryptox.com' ? (
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-400">Welcome, {user.email}</span>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <span className="text-xs md:text-sm text-gray-400 hidden sm:inline">Welcome, {user.email}</span>
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg"
+              className="flex items-center space-x-1 md:space-x-2 bg-[#2D3748] hover:bg-[#374151] px-2 md:px-4 py-2 rounded-lg"
             >
-              <LogOut size={16} />
-              <span>Logout</span>
+              <LogOut size={14} className="md:w-4 md:h-4" />
+              <span className="text-xs md:text-sm hidden sm:inline">Logout</span>
             </button>
           </div>
         ) : (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 md:space-x-2">
             <button 
-              className="bg-[#2D3748] hover:bg-[#374151] text-white px-4 py-2 rounded-lg transition-all duration-200"
+              className="bg-[#2D3748] hover:bg-[#374151] text-white px-2 md:px-4 py-2 rounded-lg transition-all duration-200 text-xs md:text-sm"
               onClick={() => {
                 setAuthMode('login');
                 setShowAuthModal(true);
@@ -210,7 +210,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
               Login
             </button>
             <button 
-              className="bg-[#22C55E] hover:bg-[#16A34A] text-white px-4 py-2 rounded-lg transition-all duration-200"
+              className="bg-[#22C55E] hover:bg-[#16A34A] text-white px-2 md:px-4 py-2 rounded-lg transition-all duration-200 text-xs md:text-sm"
               onClick={() => {
                 setAuthMode('register');
                 setShowAuthModal(true);
@@ -222,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
         )}
 
         {/* Language Selector */}
-        <div className="relative">
+        <div className="relative hidden lg:block">
           <button
             onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
             className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
@@ -256,9 +256,9 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
         
         <button 
           onClick={toggleTheme} 
-          className="p-1.5 rounded-full hover:bg-gray-800 transition-colors"
+          className="p-1 md:p-1.5 rounded-full hover:bg-gray-800 transition-colors"
         >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === 'dark' ? <Sun size={16} className="md:w-5 md:h-5" /> : <Moon size={16} className="md:w-5 md:h-5" />}
         </button>
       </div>
 
