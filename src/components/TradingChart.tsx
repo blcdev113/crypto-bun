@@ -101,17 +101,17 @@ const TradingChart: React.FC = () => {
         );
         const data = await response.json();
         
-        if (candleSeriesRef.current) {
-          const candleData = data.map((d: any) => ({
-            time: d[0] / 1000,
-            open: parseFloat(d[1]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3]),
-            close: parseFloat(d[4]),
-            volume: parseFloat(d[5]),
-          }));
-          candleSeriesRef.current.setData(candleData);
+        const candleData = data.map((d: any) => ({
+          time: d[0] / 1000,
+          open: parseFloat(d[1]),
+          high: parseFloat(d[2]),
+          low: parseFloat(d[3]),
+          close: parseFloat(d[4]),
+          volume: parseFloat(d[5]),
+        }));
         
+        if (candleSeriesRef.current) {
+          candleSeriesRef.current.setData(candleData);
         }
         
         // Set volume data
