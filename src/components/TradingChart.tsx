@@ -108,8 +108,8 @@ const TradingChart: React.FC = () => {
             high: parseFloat(d[2]),
             low: parseFloat(d[3]),
             close: parseFloat(d[4]),
+            volume: parseFloat(d[5]),
           }));
-          volume: parseFloat(d[5]),
           candleSeriesRef.current.setData(candleData);
         
         }
