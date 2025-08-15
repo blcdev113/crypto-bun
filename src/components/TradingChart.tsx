@@ -61,19 +61,8 @@ const TradingChart: React.FC = () => {
       wickDownColor: '#ff4976',
     });
 
-    // Add volume series
-    const volumeSeries = chart.addHistogramSeries({
-      color: '#26a69a',
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
-
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
-    
-    // Store volume series reference for updates
-    chartRef.current.volumeSeries = volumeSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -107,22 +96,10 @@ const TradingChart: React.FC = () => {
           high: parseFloat(d[2]),
           low: parseFloat(d[3]),
           close: parseFloat(d[4]),
-          volume: parseFloat(d[5]),
         }));
         
         if (candleSeriesRef.current) {
           candleSeriesRef.current.setData(candleData);
-        }
-        
-        // Set volume data
-        const volumeData = candleData.map((d: any) => ({
-          time: d.time,
-          value: d.volume,
-          color: d.close >= d.open ? '#4bffb5' : '#ff4976'
-        }));
-        
-        if (chartRef.current?.volumeSeries) {
-          chartRef.current.volumeSeries.setData(volumeData);
         }
       } catch (error) {
         console.error('Failed to fetch historical data:', error);
@@ -147,15 +124,6 @@ const TradingChart: React.FC = () => {
         };
         
         candleSeriesRef.current.update(candleUpdate);
-        
-        // Update volume with random data for demo
-        if (chartRef.current?.volumeSeries) {
-          chartRef.current.volumeSeries.update({
-            time: currentTime,
-            value: Math.random() * 1000 + 500,
-            color: '#4bffb5'
-          });
-        }
       }
     });
 
