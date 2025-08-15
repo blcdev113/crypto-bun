@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType } from 'lightweight-charts';
+import { createChart } from 'lightweight-charts';
 import { binanceWS } from '../services/binanceWebSocket';
 import { useToken } from '../context/TokenContext';
 
@@ -25,32 +25,26 @@ const TradingChart: React.FC = () => {
 
     // Create chart
     const chart = createChart(chartContainerRef.current, {
-      width: 350,
-      height: 250,
+      width: chartContainerRef.current.clientWidth,
+      height: 500,
       layout: {
-        background: { type: ColorType.Solid, color: '#1E293B' },
-        textColor: '#9CA3AF',
+        background: { color: '#0b0f19' },
+        textColor: '#d1d4dc',
       },
       grid: {
-        vertLines: { color: '#2D3748' },
-        horzLines: { color: '#2D3748' },
+        vertLines: { color: '#1f2733' },
+        horzLines: { color: '#1f2733' },
       },
       crosshair: {
-        mode: 0,
-        vertLine: {
-          color: '#4B5563',
-          labelBackgroundColor: '#4B5563',
-        },
-        horzLine: {
-          color: '#4B5563',
-          labelBackgroundColor: '#4B5563',
-        },
+        mode: 1,
       },
       rightPriceScale: {
-        borderColor: '#2D3748',
+        borderColor: '#485c7b',
       },
       timeScale: {
-        borderColor: '#2D3748',
+        borderColor: '#485c7b',
+        timeVisible: true,
+        secondsVisible: false,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -58,15 +52,28 @@ const TradingChart: React.FC = () => {
 
     // Add candlestick series
     const candleSeries = chart.addCandlestickSeries({
-      upColor: '#22C55E',
-      downColor: '#EF4444',
+      upColor: '#4bffb5',
+      downColor: '#ff4976',
       borderVisible: false,
-      wickUpColor: '#22C55E',
-      wickDownColor: '#EF4444',
+      borderUpColor: '#4bffb5',
+      borderDownColor: '#ff4976',
+      wickUpColor: '#4bffb5',
+      wickDownColor: '#ff4976',
+    });
+
+    // Add volume series
+    const volumeSeries = chart.addHistogramSeries({
+      color: '#26a69a',
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+      scaleMargins: { top: 0.8, bottom: 0 },
     });
 
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
+    
+    // Store volume series reference for updates
+    chartRef.current.volumeSeries = volumeSeries;
 
     // Handle resize
     const handleResize = () => {
@@ -102,7 +109,20 @@ const TradingChart: React.FC = () => {
             low: parseFloat(d[3]),
             close: parseFloat(d[4]),
           }));
+          volume: parseFloat(d[5]),
           candleSeriesRef.current.setData(candleData);
+        
+        }
+        
+        // Set volume data
+        const volumeData = candleData.map((d: any) => ({
+          time: d.time,
+          value: d.volume,
+          color: d.close >= d.open ? '#4bffb5' : '#ff4976'
+        }));
+        
+        if (chartRef.current?.volumeSeries) {
+          chartRef.current.volumeSeries.setData(volumeData);
         }
       } catch (error) {
         console.error('Failed to fetch historical data:', error);
@@ -117,13 +137,25 @@ const TradingChart: React.FC = () => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
       const tokenData = data.find(token => token.symbol === selectedToken);
       if (tokenData && candleSeriesRef.current) {
-        candleSeriesRef.current.update({
+        const currentTime = Math.floor(Date.now() / 1000);
+        const candleUpdate = {
           time: Math.floor(Date.now() / 1000),
           open: tokenData.price,
           high: tokenData.price,
           low: tokenData.price,
           close: tokenData.price,
-        });
+        };
+        
+        candleSeriesRef.current.update(candleUpdate);
+        
+        // Update volume with random data for demo
+        if (chartRef.current?.volumeSeries) {
+          chartRef.current.volumeSeries.update({
+            time: currentTime,
+            value: Math.random() * 1000 + 500,
+            color: '#4bffb5'
+          });
+        }
       }
     });
 
@@ -131,7 +163,7 @@ const TradingChart: React.FC = () => {
   }, [selectedToken]);
 
   return (
-    <div className="bg-[#1E293B] rounded-lg overflow-hidden">
+    <div className="bg-[#0b0f19] rounded-lg overflow-hidden">
       <div className="p-2 border-b border-gray-700 flex items-center justify-end space-x-2">
         {TIMEFRAMES.map(({ label, value }) => (
           <button
@@ -139,15 +171,15 @@ const TradingChart: React.FC = () => {
             onClick={() => setSelectedTimeframe(value)}
             className={`px-3 py-1 rounded text-sm ${
               selectedTimeframe === value
-                ? 'bg-[#22C55E] text-white'
-                : 'text-gray-400 hover:bg-[#2D3748]'
+                ? 'bg-[#4bffb5] text-[#0b0f19] font-medium'
+                : 'text-[#d1d4dc] hover:bg-[#1f2733]'
             }`}
           >
             {label}
           </button>
         ))}
       </div>
-      <div ref={chartContainerRef} />
+      <div ref={chartContainerRef} className="w-full h-[500px]" />
     </div>
   );
 };
