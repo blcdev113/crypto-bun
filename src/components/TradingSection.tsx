@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Clock, Wallet, TrendingUp, ChevronDown, Eye, EyeOff, X, Minus, Plus, Search } from 'lucide-react';
+import { Info, Clock, Wallet, TrendingUp, ChevronDown, Eye, EyeOff, X, Minus, Plus, Search, TrendingUp as CallIcon, TrendingDown as PutIcon } from 'lucide-react';
 import { binanceWS } from '../services/binanceWebSocket';
 import { formatCurrency } from '../utils/formatters';
 import { useToken } from '../context/TokenContext';
@@ -9,7 +9,13 @@ import TradingChart from './TradingChart';
 import OrderBook from './OrderBook';
 import TokenList from './TokenList';
 
-const TIME_OPTIONS = ['10:00', '10:30', '15:00', '15:30', '18:00', '18:30', '18:45', '19:00', '19:30', '19:45', '20:45', '21:00'];
+const TIME_PERIODS = [
+  { label: '60s', value: 60, seconds: 60 },
+  { label: '120s', value: 120, seconds: 120 },
+  { label: '5min', value: 300, seconds: 300 },
+  { label: '10min', value: 600, seconds: 600 }
+];
+
 const LEVERAGE_OPTIONS = [1, 2, 3, 5, 10, 20, 25, 50, 75, 100, 125];
 
 interface LimitOrder {
@@ -31,6 +37,11 @@ const TradingSection: React.FC = () => {
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
   const [leverage, setLeverage] = useState(20);
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState(TIME_PERIODS[0]);
+  const [countdown, setCountdown] = useState(0);
+  const [orderDeadline, setOrderDeadline] = useState<Date | null>(null);
+  const [callPercentage, setCallPercentage] = useState(55.56);
+  const [putPercentage, setPutPercentage] = useState(44.44);
   const [showLeverageModal, setShowLeverageModal] = useState(false);
   const [showOrderBook, setShowOrderBook] = useState(true);
   const [activeTab, setActiveTab] = useState<'positions' | 'orders' | 'history'>('positions');
@@ -41,6 +52,45 @@ const TradingSection: React.FC = () => {
 
   const openPositions = positions.filter(pos => pos.status === 'open');
   const closedPositions = positions.filter(pos => pos.status === 'closed');
+
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            // Start new period
+            const newDeadline = new Date();
+            newDeadline.setSeconds(newDeadline.getSeconds() + selectedTimePeriod.seconds);
+            setOrderDeadline(newDeadline);
+            return selectedTimePeriod.seconds;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      // Initialize countdown
+      const newDeadline = new Date();
+      newDeadline.setSeconds(newDeadline.getSeconds() + selectedTimePeriod.seconds);
+      setOrderDeadline(newDeadline);
+      setCountdown(selectedTimePeriod.seconds);
+    }
+
+    return () => clearInterval(interval);
+  }, [selectedTimePeriod, countdown]);
+
+  // Update call/put percentages randomly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newCall = 45 + Math.random() * 20; // 45-65%
+      setCallPercentage(newCall);
+      setPutPercentage(100 - newCall);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
@@ -90,6 +140,31 @@ const TradingSection: React.FC = () => {
   const getTokenSymbol = (symbol: string) => symbol.replace('USDT', '');
   const symbol = getTokenSymbol(selectedToken);
   const logo = cryptoLogos[symbol];
+
+  const formatTime = (seconds: number) => {
+    return `${seconds}s`;
+  };
+
+  const formatDeadline = (date: Date | null) => {
+    if (!date) return '';
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/(\d+)\/(\d+)\/(\d+),/, '$3/$1/$2');
+  };
+
+  const getTimePeriodDisplay = () => {
+    const now = new Date();
+    const start = new Date(now);
+    const end = new Date(orderDeadline || now);
+    
+    return `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}-${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+  };
 
   const calculateValue = () => {
     if (!quantity) return 0;
@@ -191,6 +266,58 @@ const TradingSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Time Period Selection */}
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex space-x-2 mb-4">
+          {TIME_PERIODS.map((period) => (
+            <button
+              key={period.value}
+              onClick={() => {
+                setSelectedTimePeriod(period);
+                setCountdown(0); // Reset countdown to trigger new period
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedTimePeriod.value === period.value
+                  ? 'bg-[#4A5568] text-white'
+                  : 'bg-[#2D3748] text-gray-400 hover:bg-[#374151]'
+              }`}
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Order Info */}
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-gray-400 mb-1">Order deadline(UTC+3)</div>
+            <div className="text-white">{formatDeadline(orderDeadline)}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[#22C55E] mb-1">Countdown</div>
+            <div className="text-[#22C55E] text-lg font-bold">{formatTime(countdown)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-gray-400 mb-1">Time Period</div>
+            <div className="text-white">{getTimePeriodDisplay()}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Controls */}
+      <div className="px-4 py-2 border-b border-gray-800">
+        <div className="flex items-center space-x-4">
+          <button className="flex items-center space-x-1 text-gray-400">
+            <span>Line</span>
+            <ChevronDown size={16} />
+          </button>
+          <button className="flex items-center space-x-1 text-gray-400">
+            <span>VOL</span>
+            <ChevronDown size={16} />
+          </button>
+        </div>
+      </div>
+
       {showTokenSelector && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#1E293B] rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
@@ -251,216 +378,161 @@ const TradingSection: React.FC = () => {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col">
-          <div className="p-4 bg-[#1E293B]">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400">Available</span>
-              <span>{formatCurrency(portfolioBalance)}</span>
-            </div>
+          {/* Chart Area */}
+          <div className="flex-1 p-4">
+            <TradingChart />
+          </div>
+        </div>
+      </div>
 
+      {/* Bottom Section with Tabs and Call/Put Buttons */}
+      <div className="border-t border-gray-800">
+        <div className="flex border-b border-gray-800">
+          <button
+            className={`flex-1 p-4 text-sm ${activeTab === 'positions' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+            onClick={() => setActiveTab('positions')}
+          >
+            Position order
+          </button>
+          <button
+            className={`flex-1 p-4 text-sm ${activeTab === 'orders' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            Historical orders
+          </button>
+          <button
+            className={`flex-1 p-4 text-sm ${activeTab === 'history' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
+            onClick={() => setActiveTab('history')}
+          >
+            Invited me
+          </button>
+          <button className="flex-1 p-4 text-sm text-gray-400">
+            Follow
+          </button>
+        </div>
+
+        {/* Call/Put Buttons */}
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-4">
             <button
-              onClick={() => setShowLeverageModal(true)}
-              className="w-full bg-[#2D3748] p-2 rounded flex items-center justify-between"
+              onClick={() => {
+                setPositionType('long');
+                handleOpenPosition();
+              }}
+              className="bg-[#22C55E] hover:bg-[#16A34A] text-white p-4 rounded-lg font-medium transition-colors flex items-center justify-between"
             >
-              <span>Cross {leverage}x</span>
-              <ChevronDown size={16} />
+              <div className="flex items-center">
+                <TrendingUp size={20} className="mr-2" />
+                <span>CALL</span>
+              </div>
+              <span className="text-lg font-bold">{callPercentage.toFixed(2)}%</span>
             </button>
-          </div>
-
-          <div className="p-4 flex-1">
-            <div className="flex mb-4">
-              <button
-                className={`flex-1 py-2 ${orderType === 'market' ? 'text-white border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
-                onClick={() => setOrderType('market')}
-              >
-                Market
-              </button>
-              <button
-                className={`flex-1 py-2 ${orderType === 'limit' ? 'text-white border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
-                onClick={() => setOrderType('limit')}
-              >
-                Limit
-              </button>
-            </div>
-
-            {orderType === 'limit' && (
-              <div className="mb-4">
-                <input
-                  type="number"
-                  value={limitPrice}
-                  onChange={(e) => setLimitPrice(e.target.value)}
-                  placeholder="Limit Price"
-                  className="w-full bg-[#2D3748] p-3 rounded"
-                />
+            <button
+              onClick={() => {
+                setPositionType('short');
+                handleOpenPosition();
+              }}
+              className="bg-[#EF4444] hover:bg-[#DC2626] text-white p-4 rounded-lg font-medium transition-colors flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <TrendingDown size={20} className="mr-2" />
+                <span>PUT</span>
               </div>
-            )}
-
-            <div className="mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400">Quantity ({symbol})</span>
-                <span className="text-gray-400">Max: {calculateMaxQuantity().toFixed(8)}</span>
-              </div>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-[#2D3748] p-3 rounded pr-16"
-                />
-                <button
-                  onClick={handleSetMaxQuantity}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#22C55E] text-sm"
-                >
-                  MAX
-                </button>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Value: {formatCurrency(calculateValue())}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => {
-                  setPositionType('long');
-                  handleOpenPosition();
-                }}
-                disabled={!quantity || parseFloat(quantity) <= 0}
-                className="bg-[#22C55E] text-white p-3 rounded font-medium disabled:opacity-50"
-              >
-                Long
-              </button>
-              <button
-                onClick={() => {
-                  setPositionType('short');
-                  handleOpenPosition();
-                }}
-                disabled={!quantity || parseFloat(quantity) <= 0}
-                className="bg-[#EF4444] text-white p-3 rounded font-medium disabled:opacity-50"
-              >
-                Short
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800">
-            <div className="flex border-b border-gray-800">
-              <button
-                className={`flex-1 p-4 text-sm ${activeTab === 'positions' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('positions')}
-              >
-                Positions ({openPositions.length})
-              </button>
-              <button
-                className={`flex-1 p-4 text-sm ${activeTab === 'orders' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('orders')}
-              >
-                Orders ({limitOrders.length})
-              </button>
-              <button
-                className={`flex-1 p-4 text-sm ${activeTab === 'history' ? 'text-[#22C55E] border-b-2 border-[#22C55E]' : 'text-gray-400'}`}
-                onClick={() => setActiveTab('history')}
-              >
-                History
-              </button>
-            </div>
-
-            <div className="p-4">
-              {activeTab === 'positions' && openPositions.map(position => (
-                <div key={position.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex items-center">
-                      <span className={`text-sm ${position.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                        {position.type.toUpperCase()}
-                      </span>
-                      <span className="ml-2">{position.leverage}x</span>
-                    </div>
-                    <button
-                      onClick={() => closePosition(position.id)}
-                      className="text-sm text-gray-400"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-gray-400">Size</div>
-                    <div className="text-right">{position.amount} {getTokenSymbol(position.symbol)}</div>
-                    <div className="text-gray-400">Entry Price</div>
-                    <div className="text-right">{formatCurrency(position.entryPrice)}</div>
-                    <div className="text-gray-400">Mark Price</div>
-                    <div className="text-right">{formatCurrency(currentPrice)}</div>
-                    <div className="text-gray-400">PNL</div>
-                    <div className={`text-right ${position.pnl && position.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                      {formatCurrency(position.pnl || 0)} ({position.pnlPercent?.toFixed(2)}%)
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {activeTab === 'orders' && limitOrders.map(order => (
-                <div key={order.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex items-center">
-                      <span className={`text-sm ${order.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                        {order.type.toUpperCase()}
-                      </span>
-                      <span className="ml-2">{order.leverage}x</span>
-                    </div>
-                    <button
-                      onClick={() => cancelLimitOrder(order.id)}
-                      className="text-sm text-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-gray-400">Symbol</div>
-                    <div className="text-right">{getTokenSymbol(order.symbol)}/USDT</div>
-                    <div className="text-gray-400">Amount</div>
-                    <div className="text-right">{order.amount}</div>
-                    <div className="text-gray-400">Limit Price</div>
-                    <div className="text-right">{formatCurrency(order.limitPrice)}</div>
-                    <div className="text-gray-400">Current Price</div>
-                    <div className="text-right">{formatCurrency(currentPrice)}</div>
-                  </div>
-                </div>
-              ))}
-
-              {activeTab === 'history' && closedPositions.map(position => (
-                <div key={position.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex items-center">
-                      <span className={`text-sm ${position.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                        {position.type.toUpperCase()}
-                      </span>
-                      <span className="ml-2">{position.leverage}x</span>
-                    </div>
-                    <span className="text-sm text-gray-400">
-                      {position.closeTime?.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-gray-400">Entry Price</div>
-                    <div className="text-right">{formatCurrency(position.entryPrice)}</div>
-                    <div className="text-gray-400">Close Price</div>
-                    <div className="text-right">{formatCurrency(currentPrice)}</div>
-                    <div className="text-gray-400">PNL</div>
-                    <div className={`text-right ${position.pnl && position.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                      {formatCurrency(position.pnl || 0)} ({position.pnlPercent?.toFixed(2)}%)
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+              <span className="text-lg font-bold">{putPercentage.toFixed(2)}%</span>
+            </button>
           </div>
         </div>
 
-        {showOrderBook && (
-          <div className="w-[300px] border-l border-gray-800">
-            <OrderBook />
-          </div>
-        )}
+        {/* Tab Content */}
+        <div className="p-4 max-h-48 overflow-y-auto">
+          {activeTab === 'positions' && openPositions.map(position => (
+            <div key={position.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div className="flex justify-between mb-2">
+                <div className="flex items-center">
+                  <span className={`text-sm ${position.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {position.type.toUpperCase()}
+                  </span>
+                  <span className="ml-2">{position.leverage}x</span>
+                </div>
+                <button
+                  onClick={() => closePosition(position.id)}
+                  className="text-sm text-gray-400"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-400">Size</div>
+                <div className="text-right">{position.amount} {getTokenSymbol(position.symbol)}</div>
+                <div className="text-gray-400">Entry Price</div>
+                <div className="text-right">{formatCurrency(position.entryPrice)}</div>
+                <div className="text-gray-400">Mark Price</div>
+                <div className="text-right">{formatCurrency(currentPrice)}</div>
+                <div className="text-gray-400">PNL</div>
+                <div className={`text-right ${position.pnl && position.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                  {formatCurrency(position.pnl || 0)} ({position.pnlPercent?.toFixed(2)}%)
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {activeTab === 'orders' && limitOrders.map(order => (
+            <div key={order.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div className="flex justify-between mb-2">
+                <div className="flex items-center">
+                  <span className={`text-sm ${order.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {order.type.toUpperCase()}
+                  </span>
+                  <span className="ml-2">{order.leverage}x</span>
+                </div>
+                <button
+                  onClick={() => cancelLimitOrder(order.id)}
+                  className="text-sm text-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-400">Symbol</div>
+                <div className="text-right">{getTokenSymbol(order.symbol)}/USDT</div>
+                <div className="text-gray-400">Amount</div>
+                <div className="text-right">{order.amount}</div>
+                <div className="text-gray-400">Limit Price</div>
+                <div className="text-right">{formatCurrency(order.limitPrice)}</div>
+                <div className="text-gray-400">Current Price</div>
+                <div className="text-right">{formatCurrency(currentPrice)}</div>
+              </div>
+            </div>
+          ))}
+
+          {activeTab === 'history' && closedPositions.map(position => (
+            <div key={position.id} className="bg-[#1E293B] p-4 rounded-lg mb-2">
+              <div className="flex justify-between mb-2">
+                <div className="flex items-center">
+                  <span className={`text-sm ${position.type === 'long' ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {position.type.toUpperCase()}
+                  </span>
+                  <span className="ml-2">{position.leverage}x</span>
+                </div>
+                <span className="text-sm text-gray-400">
+                  {position.closeTime?.toLocaleTimeString()}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-400">Entry Price</div>
+                <div className="text-right">{formatCurrency(position.entryPrice)}</div>
+                <div className="text-gray-400">Close Price</div>
+                <div className="text-right">{formatCurrency(currentPrice)}</div>
+                <div className="text-gray-400">PNL</div>
+                <div className={`text-right ${position.pnl && position.pnl >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                  {formatCurrency(position.pnl || 0)} ({position.pnlPercent?.toFixed(2)}%)
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
 
       {showLeverageModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
