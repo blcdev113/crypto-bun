@@ -3,6 +3,11 @@ import { useToken } from '../context/TokenContext';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
 import { binanceWS, TokenPrice } from '../services/binanceWebSocket';
 import { cryptoLogos } from '../utils/cryptoLogos';
+import { ArrowUpFromLine, ArrowDownToLine, ArrowLeftRight, MoreHorizontal } from 'lucide-react';
+import DepositModal from './DepositModal';
+import WithdrawModal from './WithdrawModal';
+import ConvertModal from './ConvertModal';
+import { usePositions } from '../context/PositionContext';
 
 interface MarketTickersProps {
   onNavigateToFutures: () => void;
@@ -11,6 +16,10 @@ interface MarketTickersProps {
 const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) => {
   const [tokens, setTokens] = React.useState<TokenPrice[]>([]);
   const { setSelectedToken } = useToken();
+  const { tokenBalances } = usePositions();
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showConvertModal, setShowConvertModal] = useState(false);
 
   React.useEffect(() => {
     const unsubscribe = binanceWS.onPriceUpdate((data) => {
@@ -26,9 +35,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
 
   const handleTrade = (symbol: string) => {
     setSelectedToken(symbol);
-    if (onNavigateToFutures) {
-      onNavigateToFutures();
-    }
+    onNavigateToFutures();
   };
 
   return (
@@ -50,184 +57,8 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
       </div>
 
       {/* Market Overview */}
-      <div className="px-2 md:px-4 py-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-          {sortedTokens.filter(token => ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].includes(token.symbol)).map((token) => {
-            const symbol = getTokenSymbol(token.symbol);
-            const logo = cryptoLogos[symbol];
-            const isPositive = token.priceChange >= 0;
-            
-            // Generate mini sparkline data (simplified)
-            const generateSparklineData = () => {
-              const points = [];
-              let value = 50;
-              for (let i = 0; i < 20; i++) {
-                value += (Math.random() - 0.5) * 10;
-                value = Math.max(10, Math.min(90, value));
-                points.push(value);
-              }
-              return points;
-            };
-            
-            const sparklineData = generateSparklineData();
-            const pathData = sparklineData.map((point, index) => 
-              `${index === 0 ? 'M' : 'L'} ${(index / (sparklineData.length - 1)) * 60} ${60 - (point / 100) * 40}`
-            ).join(' ');
-            
-            return (
-              <div 
-                key={token.symbol}
-                className={`p-3 md:p-4 rounded-lg transition-colors relative overflow-hidden ${
-                  isPositive 
-                    ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
-                    : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
-                }`}
-              >
-                {/* Background sparkline */}
-                <div className="absolute top-0 right-0 w-16 h-full opacity-20">
-                  <svg width="60" height="60" className="w-full h-full">
-                    <path
-                      d={pathData}
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      className="text-white"
-                    />
-                  </svg>
-                </div>
-                
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      {logo ? (
-                        <img 
-                          src={logo} 
-                          alt={symbol} 
-                          className="w-6 h-6 md:w-8 md:h-8 rounded-full mr-2"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-xs md:text-sm font-bold mr-2">
-                          {symbol.substring(0, 1)}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-white font-semibold text-xs md:text-sm">
-                          {symbol}USDT
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-white text-xs md:text-sm font-medium">
-                      {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
-                    </div>
-                  </div>
-                  
-                  <div className="text-white">
-                    <div className="text-sm md:text-lg font-bold">
-                      {token.price < 1 
-                        ? token.price.toFixed(6)
-                        : token.price.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Add TRX and XRP cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-          {sortedTokens.filter(token => ['TRXUSDT', 'XRPUSDT'].includes(token.symbol)).map((token) => {
-            const symbol = getTokenSymbol(token.symbol);
-            const logo = cryptoLogos[symbol];
-            const isPositive = token.priceChange >= 0;
-            
-            // Generate mini sparkline data
-            const generateSparklineData = () => {
-              const points = [];
-              let value = 50;
-              for (let i = 0; i < 20; i++) {
-                value += (Math.random() - 0.5) * 10;
-                value = Math.max(10, Math.min(90, value));
-                points.push(value);
-              }
-              return points;
-            };
-            
-            const sparklineData = generateSparklineData();
-            const pathData = sparklineData.map((point, index) => 
-              `${index === 0 ? 'M' : 'L'} ${(index / (sparklineData.length - 1)) * 60} ${60 - (point / 100) * 40}`
-            ).join(' ');
-            
-            return (
-              <div 
-                key={token.symbol}
-                className={`p-3 md:p-4 rounded-lg transition-colors relative overflow-hidden ${
-                  isPositive 
-                    ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] bg-opacity-90' 
-                    : 'bg-gradient-to-br from-[#EF4444] to-[#DC2626] bg-opacity-90'
-                }`}
-              >
-                {/* Background sparkline */}
-                <div className="absolute top-0 right-0 w-16 h-full opacity-20">
-                  <svg width="60" height="60" className="w-full h-full">
-                    <path
-                      d={pathData}
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      className="text-white"
-                    />
-                  </svg>
-                </div>
-                
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      {logo ? (
-                        <img 
-                          src={logo} 
-                          alt={symbol} 
-                          className="w-6 h-6 md:w-8 md:h-8 rounded-full mr-2"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white text-xs md:text-sm font-bold mr-2">
-                          {symbol.substring(0, 1)}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-white font-semibold text-xs md:text-sm">
-                          {symbol}USDT
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-white text-xs md:text-sm font-medium">
-                      {isPositive ? '+' : ''}{token.priceChange.toFixed(2)}%
-                    </div>
-                  </div>
-                  
-                  <div className="text-white">
-                    <div className="text-sm md:text-lg font-bold">
-                      {token.price < 1 
-                        ? token.price.toFixed(6)
-                        : token.price.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Remove the old market overview cards */}
-        <div className="hidden">
+      <div className="px-4 py-2">
+        <div className="grid grid-cols-3 gap-4 mb-4">
           {sortedTokens.slice(0, 3).map((token) => {
             const symbol = getTokenSymbol(token.symbol);
             const logo = cryptoLogos[symbol];
@@ -265,6 +96,43 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
               </div>
             );
           })}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <button 
+            onClick={() => setShowDepositModal(true)}
+            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
+              <ArrowDownToLine className="w-5 h-5 text-[#22C55E]" />
+            </div>
+            <span className="text-xs">Deposit</span>
+          </button>
+          <button 
+            onClick={() => setShowWithdrawModal(true)}
+            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
+              <ArrowUpFromLine className="w-5 h-5 text-[#EF4444]" />
+            </div>
+            <span className="text-xs">Withdraw</span>
+          </button>
+          <button 
+            onClick={() => setShowConvertModal(true)}
+            className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
+              <ArrowLeftRight className="w-5 h-5 text-[#3B82F6]" />
+            </div>
+            <span className="text-xs">Convert</span>
+          </button>
+          <button className="flex flex-col items-center justify-center bg-[#1E293B] p-4 rounded-lg">
+            <div className="w-10 h-10 rounded-full bg-[#2D3748] flex items-center justify-center mb-2">
+              <MoreHorizontal className="w-5 h-5 text-[#F59E0B]" />
+            </div>
+            <span className="text-xs">More</span>
+          </button>
         </div>
 
         {/* Market Table */}
@@ -309,7 +177,7 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
                     </div>
                     <button
                       onClick={() => handleTrade(token.symbol)}
-                      className="mt-1 bg-[#22C55E] hover:bg-[#16A34A] text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm"
+                      className="mt-1 bg-[#22C55E] hover:bg-[#16A34A] text-white px-3 py-1 rounded text-sm"
                     >
                       Trade
                     </button>
@@ -320,6 +188,23 @@ const MarketTickers: React.FC<MarketTickersProps> = ({ onNavigateToFutures }) =>
           </div>
         </div>
       </div>
+
+      <DepositModal 
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+      />
+
+      <WithdrawModal
+        isOpen={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+      />
+
+      <ConvertModal 
+        isOpen={showConvertModal}
+        onClose={() => setShowConvertModal(false)}
+        prices={tokens}
+        tokenBalances={tokenBalances}
+      />
     </div>
   );
 };
