@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Clock, Wallet, TrendingUp, ChevronDown, Eye, EyeOff, X, Minus, Plus, Search, TrendingUp as CallIcon, TrendingDown as PutIcon } from 'lucide-react';
+import { Info, Clock, Wallet, ChevronDown, Eye, EyeOff, X, Minus, Plus, Search, TrendingUp as CallIcon, TrendingDown as PutIcon } from 'lucide-react';
 import { binanceWS } from '../services/binanceWebSocket';
 import { formatCurrency } from '../utils/formatters';
 import { useToken } from '../context/TokenContext';
@@ -422,7 +422,7 @@ const TradingSection: React.FC = () => {
               className="bg-[#22C55E] hover:bg-[#16A34A] text-white p-4 rounded-lg font-medium transition-colors flex items-center justify-between"
             >
               <div className="flex items-center">
-                <TrendingUp size={20} className="mr-2" />
+                <CallIcon size={20} className="mr-2" />
                 <span>CALL</span>
               </div>
               <span className="text-lg font-bold">{callPercentage.toFixed(2)}%</span>
@@ -435,7 +435,7 @@ const TradingSection: React.FC = () => {
               className="bg-[#EF4444] hover:bg-[#DC2626] text-white p-4 rounded-lg font-medium transition-colors flex items-center justify-between"
             >
               <div className="flex items-center">
-                <TrendingDown size={20} className="mr-2" />
+                <PutIcon size={20} className="mr-2" />
                 <span>PUT</span>
               </div>
               <span className="text-lg font-bold">{putPercentage.toFixed(2)}%</span>
