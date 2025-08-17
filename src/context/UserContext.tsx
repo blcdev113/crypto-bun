@@ -6,6 +6,9 @@ interface UserProfile {
   id: string;
   email: string;
   unique_id: string;
+  name?: string;
+  referral_code: string;
+  referred_by_id?: string;
   created_at: string;
   updated_at: string;
 }
