@@ -52,7 +52,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Send OTP (signup or login in one call)
+      // Send magic link for signup/login
       const { error } = await supabase.auth.signInWithOtp({
         email
       });
@@ -86,7 +86,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithOtp = async (email: string) => {
     setLoading(true);
     try {
-      // Send OTP (signup or login in one call)
+      // Send magic link for login
       const { error } = await supabase.auth.signInWithOtp({
         email
       });
@@ -100,21 +100,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyOtp = async (email: string, token: string) => {
-    setLoading(true);
-    try {
-      // Verify OTP
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: "email",
-      });
-      
-      if (error) throw error;
-    } catch (error: any) {
-      throw new Error(error.message || 'OTP verification failed');
-    } finally {
-      setLoading(false);
-    }
+    // Magic links don't need manual verification
+    // The link in the email will automatically authenticate the user
+    return Promise.resolve();
   };
 
   const signOut = async () => {
