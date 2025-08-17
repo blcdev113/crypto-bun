@@ -54,9 +54,8 @@ serve(async (req: Request) => {
     // Get Resend API key from environment variables
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      console.error("RESEND_API_KEY not found in environment variables");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Missing RESEND_API_KEY" }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -74,25 +73,22 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         from: "Acme <onboarding@resend.dev>",
         to: [to],
-        subject: "Verify your email",
-        html: "<p>Click the link below to verify your email</p>"
+        subject: "Verify your email 🚀",
+        html: `<h1>Hello!</h1><p>Click <a href="https://your-app.com/verify?email=${to}">here</a> to verify your email.</p>`
       }),
     });
 
     const result = await emailResponse.json();
 
     if (!emailResponse.ok) {
-      console.error("Resend API error:", result);
       return new Response(
-        JSON.stringify(result),
+        JSON.stringify({ error: result.message || "Failed to send email" }),
         { 
-          status: emailResponse.status, 
+          status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
     }
-
-    console.log("Email sent successfully:", result);
 
     return new Response(
       JSON.stringify(result),
@@ -103,13 +99,11 @@ serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error("Error in send-verification-email function:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json"
-} 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
   }
