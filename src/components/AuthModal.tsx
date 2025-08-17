@@ -9,7 +9,7 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const { signUp, signIn, signInWithOtp, verifyOtp, loading } = useUser();
+  const { signUp, signIn, signInWithOtp, sendRegistrationOtp, verifyOtp, loading } = useUser();
   const [mode, setMode] = useState<'login' | 'register' | 'otp-login' | 'otp-verify'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +17,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isRegistrationOtp, setIsRegistrationOtp] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -31,6 +32,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     setConfirmPassword('');
     setOtpCode('');
     setAgreeToTerms(false);
+    setIsRegistrationOtp(false);
     setError('');
     setSuccess('');
     setShowSuccess(false);
@@ -56,13 +58,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
 
     try {
-      await signUp(email, password);
-      setSuccess('Registration successful! Please check your email to confirm your account.');
-      setShowSuccess(true);
-      
-      setTimeout(() => {
-        handleClose();
-      }, 3000);
+      await sendRegistrationOtp(email, password);
+      setSuccess('Verification code sent to your email! Please check your inbox.');
+      setIsRegistrationOtp(true);
+      setMode('otp-verify');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     }
@@ -104,7 +103,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
     try {
       await verifyOtp(email, otpCode);
-      handleClose();
+      
+      if (isRegistrationOtp) {
+        setSuccess('Registration successful! You can now log in with your credentials.');
+        setShowSuccess(true);
+        setTimeout(() => {
+          handleClose();
+        }, 3000);
+      } else {
+        handleClose();
+      }
     } catch (err: any) {
       setError(err.message || 'OTP verification failed');
     }
@@ -162,9 +170,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             <div className="w-16 h-16 bg-[#22C55E] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Shield size={32} className="text-[#22C55E]" />
             </div>
-            <p className="text-gray-400 mb-2">
-              We've sent a 6-digit verification code to
-            </p>
+            {isRegistrationOtp ? (
+              <p className="text-gray-400 mb-2">
+                We've sent a verification code to complete your registration to
+              </p>
+            ) : (
+              <p className="text-gray-400 mb-2">
+                We've sent a 6-digit login code to
+              </p>
+            )}
             <p className="font-medium">{email}</p>
           </div>
 
@@ -215,7 +229,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => handleOtpLogin(new Event('submit') as any)}
+                onClick={() => {
+                  if (isRegistrationOtp) {
+                    handleSignUp(new Event('submit') as any);
+                  } else {
+                    handleOtpLogin(new Event('submit') as any);
+                  }
+                }}
                 disabled={loading}
                 className="text-[#22C55E] hover:underline disabled:text-gray-500 disabled:no-underline"
               >
@@ -256,7 +276,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
         <div className="text-sm text-gray-400 mb-6">
           {mode === 'login' ? 'Welcome back! Sign in with your email' : 
-           mode === 'register' ? 'Register with your email' :
+          mode === 'register' ? 'Create your account - we\'ll send a verification code to your email' :
            'We\'ll send you a login code'}
         </div>
 
@@ -368,7 +388,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 Processing...
               </div>
             ) : mode === 'login' ? 'Login' : 
-                mode === 'register' ? 'Create Account' : 
+               mode === 'register' ? 'Send Verification Code' : 
                 'Send Login Code'}
           </button>
 
