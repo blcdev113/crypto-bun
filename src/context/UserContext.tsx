@@ -11,6 +11,8 @@ interface UserContextType {
   signInWithOtp: (email: string) => Promise<void>;
   sendRegistrationOtp: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -105,6 +107,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Promise.resolve();
   };
 
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to update password');
+    } finally {
+      setLoading(false);
+    }
+  };
   const signOut = async () => {
     setLoading(true);
     try {
@@ -125,6 +156,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signUp, 
       signIn, 
       signInWithOtp, 
+      resetPassword,
+      updatePassword,
       verifyOtp, 
       signOut 
     }}>

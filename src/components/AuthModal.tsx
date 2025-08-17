@@ -9,8 +9,8 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const { signUp, signIn, signInWithOtp, verifyOtp, loading } = useUser();
-  const [mode, setMode] = useState<'login' | 'register' | 'otp-login' | 'otp-verify'>(initialMode);
+  const { signUp, signIn, signInWithOtp, verifyOtp, resetPassword, loading } = useUser();
+  const [mode, setMode] = useState<'login' | 'register' | 'otp-login' | 'otp-verify' | 'forgot-password'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -87,6 +87,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      await resetPassword(email);
+      setSuccess('Password reset link sent to your email! Please check your inbox.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    }
+  };
   if (!isOpen) return null;
 
   return (
@@ -100,7 +111,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         </button>
 
         <div className="flex items-center mb-6">
-          {(mode === 'register' || mode === 'otp-login') && (
+          {(mode === 'register' || mode === 'otp-login' || mode === 'forgot-password') && (
             <button 
               onClick={() => setMode('login')}
               className="text-gray-400 hover:text-white mr-4"
@@ -111,19 +122,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
           <h2 className="text-xl font-semibold">
             {mode === 'login' ? 'TX Exchange Account Login' : 
              mode === 'register' ? 'Create TX Exchange Account' :
-             'Login with Email Code'}
+             mode === 'forgot-password' ? 'Reset Password' :
+             'Login with Magic Link'}
           </h2>
         </div>
 
         <div className="text-sm text-gray-400 mb-6">
           {mode === 'login' ? 'Welcome back! Sign in with your email' : 
           mode === 'register' ? 'Create your account - we\'ll send a verification code to your email' :
-           'We\'ll send you a login code'}
+          mode === 'forgot-password' ? 'Enter your email to receive a password reset link' :
+           'We\'ll send you a magic link'}
         </div>
 
         <form onSubmit={
           mode === 'login' ? handleSignIn : 
           mode === 'register' ? handleSignUp : 
+          mode === 'forgot-password' ? handleForgotPassword :
           handleOtpLogin
         }>
           {error && (
@@ -155,7 +169,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             </div>
           </div>
 
-          {mode !== 'otp-login' && (
+          {mode !== 'otp-login' && mode !== 'forgot-password' && (
             <div className="mb-4">
               <label className="block text-sm text-gray-400 mb-1">
                 Password
@@ -261,6 +275,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 className="text-[#22C55E] hover:underline"
               >
                 Already have an account? Login
+              </button>
+            ) : mode === 'forgot-password' ? (
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="text-[#22C55E] hover:underline"
+              >
+                Remember your password? Login
               </button>
             ) : (
               <button
