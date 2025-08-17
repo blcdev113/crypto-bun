@@ -15,13 +15,13 @@ import {
 } from 'lucide-react';
 
 const AccountDropdown: React.FC = () => {
-  const { user, userProfile, signOut } = useUser();
+  const { user, signOut } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [copiedReferral, setCopiedReferral] = useState(false);
-  const [copiedReferral, setCopiedReferral] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const referralCode = userProfile?.referral_code || '';
+  // Generate a mock user ID for display
+  const userId = user ? `9HDDRD0RS000` : '';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,11 +34,12 @@ const AccountDropdown: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralCode);
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 2000);
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(userId);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
   };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -86,7 +87,7 @@ const AccountDropdown: React.FC = () => {
       label: 'Security',
       onClick: () => console.log('Security clicked'),
       disabled: false,
-      hasSubmenu: true,
+      hasSubmenu: true
     },
     {
       icon: Trash2,
@@ -121,22 +122,20 @@ const AccountDropdown: React.FC = () => {
                 <div className="text-white font-medium truncate">
                   {user.email}
                 </div>
-                {referralCode && (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-sm text-gray-400">Referral:</span>
-                    <span className="text-sm text-white font-mono">{referralCode}</span>
-                    <button
-                      onClick={handleCopyReferral}
-                      className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
-                    >
-                      {copiedReferral ? (
-                        <CheckCircle size={16} />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-sm text-gray-400">ID:</span>
+                  <span className="text-sm text-white font-mono">{userId}</span>
+                  <button
+                    onClick={handleCopyId}
+                    className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
+                  >
+                    {copiedId ? (
+                      <CheckCircle size={16} />
+                    ) : (
+                      <Copy size={16} />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded text-xs font-bold">
                 VIP0

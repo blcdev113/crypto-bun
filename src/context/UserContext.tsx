@@ -2,21 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
-interface UserProfile {
-  id: string;
-  referral_code: string;
-  referred_by: string | null;
-  created_at: string;
-}
-
 interface UserContextType {
   user: User | null;
-  userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, referralCode?: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithOtp: (email: string) => Promise<void>;
+  sendRegistrationOtp: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
@@ -35,43 +28,14 @@ export const useUser = () => {
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Fetch user profile data
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return;
-      }
-
-      if (!data) {
-        console.log('No user profile found, user may need to complete registration');
-        return;
-      }
-
-      setUserProfile(data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      }
       setLoading(false);
     });
 
@@ -81,42 +45,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, referralCode?: string) => {
+  const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password
+      // Send magic link for signup/login
+      const { error } = await supabase.auth.signInWithOtp({
+        email
       });
       
       if (error) {
         throw error;
-      }
-
-      // Apply referral code if provided and user was created
-      if (referralCode && data.user) {
-        try {
-          const { error: referralError } = await supabase.rpc('apply_referral', {
-            invite_code: referralCode
-          });
-          
-          if (referralError) {
-            console.error('Failed to apply referral code:', referralError);
-          }
-        } catch (referralError) {
-          console.error('Error applying referral code:', referralError);
-        }
       }
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
@@ -158,20 +102,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyOtp = async (email: string, token: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: 'email'
-      });
-      
-      if (error) throw error;
-    } catch (error: any) {
-      throw new Error(error.message || 'OTP verification failed');
-    } finally {
-      setLoading(false);
-    }
+    // Magic links don't need manual verification
+    // The link in the email will automatically authenticate the user
+    return Promise.resolve();
   };
 
   const resetPassword = async (email: string) => {
@@ -208,7 +141,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setUserProfile(null);
     } catch (error: any) {
       throw new Error(error.message || 'Sign out failed');
     } finally {
@@ -219,7 +151,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <UserContext.Provider value={{ 
       user, 
-      userProfile,
       session, 
       loading, 
       signUp, 
