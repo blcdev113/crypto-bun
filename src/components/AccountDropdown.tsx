@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
+import ReferralModal from './ReferralModal';
 import { 
   User, 
   Copy, 
@@ -18,6 +19,7 @@ const AccountDropdown: React.FC = () => {
   const { user, signOut } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate a mock user ID for display
@@ -61,7 +63,10 @@ const AccountDropdown: React.FC = () => {
     {
       icon: Share2,
       label: 'Share With Friends',
-      onClick: () => console.log('Share With Friends clicked'),
+      onClick: () => {
+        setShowReferralModal(true);
+        setIsOpen(false);
+      },
       disabled: false
     },
     {
@@ -179,6 +184,11 @@ const AccountDropdown: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ReferralModal 
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+      />
     </div>
   );
 };
