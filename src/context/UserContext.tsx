@@ -8,8 +8,9 @@ interface UserContextType {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  sendVerificationCode: (email: string, type?: 'signup' | 'login') => Promise<void>;
-  verifyCode: (email: string, code: string, password?: string, type?: 'signup' | 'login') => Promise<void>;
+  signInWithOtp: (email: string) => Promise<void>;
+  sendRegistrationOtp: (email: string, password: string) => Promise<void>;
+  verifyOtp: (email: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -51,9 +52,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      // Send OTP (signup or login in one call)
+      const { error } = await supabase.auth.signInWithOtp({
+        email
       });
       
       if (error) {
@@ -82,55 +83,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const sendVerificationCode = async (email: string, type: 'signup' | 'login' = 'signup') => {
+  const signInWithOtp = async (email: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, type }),
+      // Send OTP (signup or login in one call)
+      const { error } = await supabase.auth.signInWithOtp({
+        email
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send verification code');
-      }
+      if (error) throw error;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to send verification code');
+      throw new Error(error.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
   };
 
-  const verifyCode = async (email: string, code: string, password?: string, type: 'signup' | 'login' = 'signup') => {
+  const verifyOtp = async (email: string, token: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, code, password, type }),
+      // Verify OTP
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email",
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Verification failed');
-      }
-
-      // For login, we need to handle the session
-      if (type === 'login' && data.session_url) {
-        // Redirect to session URL or handle session creation
-        window.location.href = data.session_url;
-      }
+      if (error) throw error;
     } catch (error: any) {
-      throw new Error(error.message || 'Code verification failed');
+      throw new Error(error.message || 'OTP verification failed');
     } finally {
       setLoading(false);
     }
@@ -155,8 +136,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading, 
       signUp, 
       signIn, 
-      sendVerificationCode, 
-      verifyCode, 
+      signInWithOtp, 
+      verifyOtp, 
       signOut 
     }}>
       {children}
