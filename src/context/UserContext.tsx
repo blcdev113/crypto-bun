@@ -51,14 +51,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
       
       if (error) {
         throw error;
       }
+      
+      // Return user data for UI feedback
+      return data;
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
     } finally {
@@ -82,63 +88,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const sendVerificationCode = async (email: string, type: 'signup' | 'login' = 'signup') => {
+  const sendPasswordResetEmail = async (email: string) => {
     setLoading(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nbtdsnmjpqwtfmxhuyaw.supabase.co';
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5idGRzbm1qcHF3dGZteGh1eWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MTA2NTksImV4cCI6MjA3MDQ4NjY1OX0.Kq_fusTyJBrTv4QOJXC3ugVcz2Iv36TTHfv8UYeY3MU';
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-verification-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ email, type }),
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send verification code');
-      }
-      
-      // Log the code in development for testing
-      if (data.code) {
-        console.log(`🔑 Verification code for testing: ${data.code}`);
-      }
+      if (error) throw error;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to send verification code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyCode = async (email: string, code: string, password?: string, type: 'signup' | 'login' = 'signup') => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, code, password, type }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Verification failed');
-      }
-
-      // For login, we need to handle the session
-      if (type === 'login' && data.session_url) {
-        // Redirect to session URL or handle session creation
-        window.location.href = data.session_url;
-      }
-    } catch (error: any) {
-      throw new Error(error.message || 'Code verification failed');
+      throw new Error(error.message || 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
@@ -163,8 +122,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading, 
       signUp, 
       signIn, 
-      sendVerificationCode, 
-      verifyCode, 
+      sendPasswordResetEmail,
       signOut 
     }}>
       {children}
