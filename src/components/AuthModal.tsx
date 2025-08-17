@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, X, Check, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, X, Check, Loader2, Shield } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 interface AuthModalProps {
@@ -24,6 +24,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showVerificationStep, setShowVerificationStep] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     setError('');
     setSuccess('');
     setShowSuccessScreen(false);
+    setShowVerificationStep(false);
+    setVerificationSent(false);
+    setResendCooldown(0);
   };
 
   const handleClose = () => {
@@ -57,6 +63,99 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       handleClose();
     } catch (err: any) {
       setError(err.message || 'Login failed');
+    }
+  };
+
+  const handleSendVerificationCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (!agreeToTerms) {
+      setError('Please agree to the Terms of Service');
+      return;
+    }
+
+    try {
+      // Simulate sending verification code
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setShowVerificationStep(true);
+      setVerificationSent(true);
+      setSuccess('Verification code sent to your email');
+      
+      // Start cooldown timer
+      setResendCooldown(60);
+      const timer = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send verification code');
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!verificationCode || verificationCode.length !== 6) {
+      setError('Please enter a valid 6-digit verification code');
+      return;
+    }
+
+    try {
+      // Simulate code verification
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demo purposes, accept any 6-digit code
+      if (verificationCode.length === 6) {
+        await register(email, password);
+        setShowSuccessScreen(true);
+        setSuccess('Registration successful!');
+        
+        // Automatically close the modal after 2 seconds
+        setTimeout(() => {
+          handleClose();
+        }, 2000);
+      } else {
+        setError('Invalid verification code');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Verification failed');
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+    
+    try {
+      // Simulate resending code
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setSuccess('Verification code resent to your email');
+      setResendCooldown(60);
+      
+      const timer = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      setError('Failed to resend verification code');
     }
   };
 
@@ -98,6 +197,103 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   };
 
   if (!isOpen) return null;
+
+  if (showVerificationStep) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#0F172A] rounded-lg w-full max-w-md p-6 relative">
+          <button 
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="flex items-center mb-6">
+            <button 
+              onClick={() => setShowVerificationStep(false)}
+              className="text-gray-400 hover:text-white mr-4"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 className="text-xl font-semibold">Email Verification</h2>
+          </div>
+
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-[#22C55E] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield size={32} className="text-[#22C55E]" />
+            </div>
+            <p className="text-gray-400 mb-2">
+              We've sent a 6-digit verification code to
+            </p>
+            <p className="font-medium">{email}</p>
+          </div>
+
+          <form onSubmit={handleVerifyCode}>
+            {error && (
+              <div className="bg-red-500 bg-opacity-10 text-red-500 px-4 py-2 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-500 bg-opacity-10 text-green-500 px-4 py-2 rounded-lg mb-4">
+                {success}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Verification Code
+              </label>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setVerificationCode(value);
+                }}
+                placeholder="Enter 6-digit code"
+                className="w-full bg-[#1E293B] text-white px-4 py-3 rounded-lg text-center text-2xl font-mono tracking-widest"
+                maxLength={6}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || verificationCode.length !== 6}
+              className="w-full bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 text-white py-3 rounded-lg font-medium transition-all duration-200 mb-4"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 size={20} className="animate-spin mr-2" />
+                  Verifying...
+                </div>
+              ) : 'Verify Email'}
+            </button>
+
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-2">
+                Didn't receive the code?
+              </p>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={resendCooldown > 0}
+                className="text-[#22C55E] hover:underline disabled:text-gray-500 disabled:no-underline"
+              >
+                {resendCooldown > 0 
+                  ? `Resend in ${resendCooldown}s` 
+                  : 'Resend Code'
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (showSuccessScreen) {
     return (
@@ -165,6 +361,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         </div>
 
         <form onSubmit={mode === 'login' ? handleLogin : handleRegister}>
+        <form onSubmit={mode === 'login' ? handleLogin : handleSendVerificationCode}>
           {error && (
             <div className="bg-red-500 bg-opacity-10 text-red-500 px-4 py-2 rounded-lg mb-4">
               {error}
@@ -296,7 +493,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 <Loader2 size={20} className="animate-spin mr-2" />
                 Processing...
               </div>
-            ) : mode === 'login' ? 'Login' : 'Register'}
+            ) : mode === 'login' ? 'Login' : 'Send Verification Code'}
           </button>
 
           {mode === 'login' ? (
