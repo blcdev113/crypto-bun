@@ -9,17 +9,18 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const { signUp, signIn, sendPasswordResetEmail, loading } = useUser();
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot-password'>(initialMode);
+  const { signUp, signIn, sendVerificationCode, verifyCode, loading } = useUser();
+  const [mode, setMode] = useState<'login' | 'register' | 'otp-login' | 'otp-verify'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [verificationType, setVerificationType] = useState<'signup' | 'login'>('signup');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
@@ -29,11 +30,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setOtpCode('');
     setAgreeToTerms(false);
     setError('');
     setSuccess('');
     setShowSuccess(false);
-    setEmailSent(false);
   };
 
   const handleClose = () => {
@@ -56,10 +57,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
 
     try {
-      await signUp(email, password);
-      setEmailSent(true);
-      setSuccess('Registration successful! Please check your email and click the confirmation link to activate your account.');
-      setShowSuccess(true);
+      // Store password temporarily for verification step
+      sessionStorage.setItem('tempPassword', password);
+      setVerificationType('signup');
+      
+      await sendVerificationCode(email, 'signup');
+      setSuccess('Verification code sent to your email! Please check your inbox.');
+      setMode('otp-verify');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     }
@@ -77,16 +81,50 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleOtpLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     try {
-      await sendPasswordResetEmail(email);
-      setSuccess('Password reset email sent! Please check your inbox.');
-      setEmailSent(true);
+      setVerificationType('login');
+      await sendVerificationCode(email, 'login');
+      setSuccess('OTP sent to your email! Please check your inbox.');
+      setMode('otp-verify');
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+      setError(err.message || 'Failed to send OTP');
+    }
+  };
+
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!otpCode || otpCode.length !== 6) {
+      setError('Please enter a valid 6-digit code');
+      return;
+    }
+
+    try {
+      const tempPassword = sessionStorage.getItem('tempPassword');
+      
+      if (verificationType === 'signup' && tempPassword) {
+        await verifyCode(email, otpCode, tempPassword, 'signup');
+        sessionStorage.removeItem('tempPassword');
+      } else {
+        await verifyCode(email, otpCode, undefined, 'login');
+      }
+      
+      setSuccess('Authentication successful!');
+      setShowSuccess(true);
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'OTP verification failed');
+      // Clear temp password on error
+      if (verificationType === 'signup') {
+        sessionStorage.removeItem('tempPassword');
+      }
     }
   };
 
@@ -107,16 +145,113 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             <div className="w-16 h-16 bg-[#22C55E] rounded-full flex items-center justify-center mx-auto mb-4">
               <Check size={32} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold mb-4">
-              {emailSent ? 'Check Your Email!' : 'Success!'}
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">Registration Successful!</h2>
             <p className="text-gray-400 mb-6">
-              {emailSent 
-                ? 'We\'ve sent you a confirmation email. Please click the link in the email to activate your account.'
-                : success
-              }
+              Please check your email and click the confirmation link to activate your account.
             </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'otp-verify') {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-[#0F172A] rounded-lg w-full max-w-md p-6 relative">
+          <button 
+            onClick={handleClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="flex items-center mb-6">
+            <button 
+              onClick={() => setMode('otp-login')}
+              className="text-gray-400 hover:text-white mr-4"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 className="text-xl font-semibold">Enter Verification Code</h2>
+          </div>
+
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-[#22C55E] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield size={32} className="text-[#22C55E]" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">
+              {verificationType === 'signup' ? 'Complete Registration' : 'Enter Login Code'}
+            </h2>
+              We've sent a 6-digit {verificationType === \'signup' ? 'verification' : 'login'} code to
+            </p>
+            <p className="font-medium">{email}</p>
+          </div>
+
+          <form onSubmit={handleOtpVerify}>
+            {error && (
+              <div className="bg-red-500 bg-opacity-10 text-red-500 px-4 py-2 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-500 bg-opacity-10 text-green-500 px-4 py-2 rounded-lg mb-4">
+                {success}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Verification Code
+              </label>
+              <input
+                type="text"
+                value={otpCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setOtpCode(value);
+                }}
+                placeholder="Enter 6-digit code"
+                className="w-full bg-[#1E293B] text-white px-4 py-3 rounded-lg text-center text-2xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-[#22C55E]"
+                maxLength={6}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otpCode.length !== 6}
+              className="w-full bg-[#22C55E] hover:bg-[#16A34A] disabled:bg-gray-600 text-white py-3 rounded-lg font-medium transition-all duration-200 mb-4"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 size={20} className="animate-spin mr-2" />
+                  Verifying...
+                </div>
+              ) : 'Verify Code'}
+            </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (verificationType === 'signup') {
+                    const tempPassword = sessionStorage.getItem('tempPassword');
+                    if (tempPassword) {
+                      sendVerificationCode(email, 'signup');
+                    }
+                  } else {
+                    sendVerificationCode(email, 'login');
+                  }
+                }}
+                disabled={loading}
+                className="text-[#22C55E] hover:underline disabled:text-gray-500 disabled:no-underline"
+              >
+                Resend Code
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );
@@ -133,7 +268,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         </button>
 
         <div className="flex items-center mb-6">
-          {(mode === 'register' || mode === 'forgot-password') && (
+          {(mode === 'register' || mode === 'otp-login') && (
             <button 
               onClick={() => setMode('login')}
               className="text-gray-400 hover:text-white mr-4"
@@ -144,20 +279,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
           <h2 className="text-xl font-semibold">
             {mode === 'login' ? 'TX Exchange Account Login' : 
              mode === 'register' ? 'Create TX Exchange Account' :
-             'Reset Password'}
+             'Login with Email Code'}
           </h2>
         </div>
 
         <div className="text-sm text-gray-400 mb-6">
           {mode === 'login' ? 'Welcome back! Sign in with your email and password' : 
-           mode === 'register' ? 'Create your account - we\'ll send a confirmation email to verify your address' :
-           'Enter your email address and we\'ll send you a password reset link'}
+           mode === 'register' ? 'Create your account - we\'ll send a 6-digit verification code to your email' :
+           'We\'ll send you a 6-digit login code'}
         </div>
 
         <form onSubmit={
           mode === 'login' ? handleSignIn : 
           mode === 'register' ? handleSignUp : 
-          handleForgotPassword
+          handleOtpLogin
         }>
           {error && (
             <div className="bg-red-500 bg-opacity-10 text-red-500 px-4 py-2 rounded-lg mb-4">
@@ -188,7 +323,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             </div>
           </div>
 
-          {mode !== 'forgot-password' && (
+          {mode !== 'otp-login' && (
             <div className="mb-4">
               <label className="block text-sm text-gray-400 mb-1">
                 Password
@@ -262,18 +397,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 Processing...
               </div>
             ) : mode === 'login' ? 'Sign In' : 
-               mode === 'register' ? 'Create Account' : 
-                'Send Reset Link'}
+               mode === 'register' ? 'Send Verification Code' : 
+                'Send Code'}
           </button>
 
           {mode === 'login' && (
             <div className="text-center mb-4">
               <button
                 type="button"
-                onClick={() => setMode('forgot-password')}
+                onClick={() => setMode('otp-login')}
                 className="text-[#22C55E] hover:underline text-sm"
               >
-                Forgot your password?
+                Login with Email Code instead
               </button>
             </div>
           )}
@@ -301,7 +436,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 onClick={() => setMode('login')}
                 className="text-[#22C55E] hover:underline"
               >
-                {mode === 'register' ? 'Already have an account? Login' : 'Back to Login'}
+                Back to Login
               </button>
             )}
           </div>
