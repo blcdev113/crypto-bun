@@ -51,7 +51,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'TX Exchange <noreply@txexchange.com>',
+        from: 'TX Exchange <onboarding@resend.dev>',
         to: [email],
         subject: 'Verify Your TX Exchange Account',
         html: `
