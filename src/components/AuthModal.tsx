@@ -199,6 +199,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             {success && (
               <div className="bg-green-500 bg-opacity-10 text-green-500 px-4 py-2 rounded-lg mb-4">
                 {success}
+                <div className="text-xs mt-1 text-gray-400">
+                  Check your email inbox and spam folder for the verification code.
+                </div>
               </div>
             )}
 
