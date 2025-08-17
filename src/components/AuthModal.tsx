@@ -183,7 +183,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
             <h2 className="text-xl font-semibold mb-2">
               {verificationType === 'signup' ? 'Complete Registration' : 'Enter Login Code'}
             </h2>
-              We've sent a 6-digit {verificationType === 'signup' ? 'verification' : 'login'} code to
+              We've sent a 6-digit {verificationType === \'signup' ? 'verification' : 'login'} code to
             </p>
             <p className="font-medium">{email}</p>
           </div>
