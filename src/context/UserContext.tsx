@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import { ReferralHandler } from '../utils/referralHandler';
 
 interface UserProfile {
   id: string;
@@ -101,13 +102,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
+      // Get referral code from cookie before signup
+      const referralCode = ReferralHandler.getActiveReferralCode();
+      
       // Send magic link for signup/login
       const { error } = await supabase.auth.signInWithOtp({
-        email
+        email,
+        data: referralCode ? { referral_code: referralCode } : undefined
       });
       
       if (error) {
         throw error;
+      }
+      
+      // Clear referral cookie after successful signup attempt
+      if (referralCode) {
+        ReferralHandler.clearReferralCookie();
       }
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
