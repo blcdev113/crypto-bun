@@ -53,14 +53,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
 
     try {
-      // Get referral code from cookie if present
-      const refCode = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('ref='))
-        ?.split('=')[1];
-
-      await signUp(email, password, refCode);
-      setSuccess('Account created successfully! Please check your email to verify your account.');
+      await signUp(email, password);
+      setSuccess('Magic link sent to your email! Please check your inbox and click the link to complete registration.');
+      // Don't change mode - user will be redirected from email
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     }

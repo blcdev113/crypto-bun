@@ -1,5 +1,4 @@
 import React from 'react';
-import { useEffect } from 'react';
 import Header from '../components/Header';
 import MarketTickers from '../components/MarketTickers';
 import TokenList from '../components/TokenList';
@@ -13,7 +12,6 @@ import { BarChart2, Home, LineChart, Wallet, Mail } from 'lucide-react';
 import { useToken } from '../context/TokenContext';
 import { cryptoLogos } from '../utils/cryptoLogos';
 import AuthModal from '../components/AuthModal';
-import { handleReferralFromURL } from '../utils/referralCookie';
 
 const ExchangeLayout: React.FC = () => {
   const { theme } = useTheme();
@@ -22,11 +20,6 @@ const ExchangeLayout: React.FC = () => {
   const { selectedToken, setSelectedToken } = useToken();
   const [showTokenList, setShowTokenList] = React.useState(false);
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-
-  // Handle referral codes from URL on component mount
-  useEffect(() => {
-    handleReferralFromURL();
-  }, []);
 
   const getTokenSymbol = (symbol: string) => symbol.replace('USDT', '');
   const symbol = getTokenSymbol(selectedToken);

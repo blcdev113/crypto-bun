@@ -15,7 +15,7 @@ interface UserContextType {
   userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, referralCode?: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithOtp: (email: string) => Promise<void>;
   sendRegistrationOtp: (email: string, password: string) => Promise<void>;
@@ -94,25 +94,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, referralCode?: string) => {
+  const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Create user account with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            referral_code: referralCode || null
-          }
-        }
+      // Send magic link for signup/login
+      const { error } = await supabase.auth.signInWithOtp({
+        email
       });
       
       if (error) {
         throw error;
       }
-
-      // The user creation in the users table will be handled by the database trigger
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
     } finally {
