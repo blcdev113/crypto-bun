@@ -71,7 +71,7 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Acme <onboarding@resend.dev>",
+        from: "onboarding@resend.dev",
         to: [to],
         subject: "Verify your email 🚀",
         html: `
@@ -93,8 +93,13 @@ serve(async (req: Request) => {
     const result = await emailResponse.json();
 
     if (!emailResponse.ok) {
+      console.error("Resend API error:", result);
       return new Response(
-        JSON.stringify({ error: result.message || "Failed to send email" }),
+        JSON.stringify({ 
+          error: "Failed to send email", 
+          details: result.message || "Unknown error",
+          status: emailResponse.status 
+        }),
         { 
           status: 500, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -111,8 +116,12 @@ serve(async (req: Request) => {
     );
 
   } catch (error) {
+    console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ 
+        error: "Internal server error", 
+        details: error.message 
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
