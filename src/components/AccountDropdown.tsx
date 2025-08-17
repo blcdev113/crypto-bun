@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import ShareWithFriendsModal from './ShareWithFriendsModal';
 import { 
   User, 
   Copy, 
@@ -19,7 +18,6 @@ const AccountDropdown: React.FC = () => {
   const { user, signOut } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate a mock user ID for display
@@ -63,10 +61,7 @@ const AccountDropdown: React.FC = () => {
     {
       icon: Share2,
       label: 'Share With Friends',
-      onClick: () => {
-        setShowShareModal(true);
-        setIsOpen(false);
-      },
+      onClick: () => console.log('Share With Friends clicked'),
       disabled: false
     },
     {
@@ -184,11 +179,6 @@ const AccountDropdown: React.FC = () => {
           </div>
         </div>
       )}
-
-      <ShareWithFriendsModal 
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-      />
     </div>
   );
 };
