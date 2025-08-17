@@ -360,8 +360,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
           }
         </div>
 
-        <form onSubmit={mode === 'login' ? handleLogin : handleRegister}>
-        <form onSubmit={mode === 'login' ? handleLogin : handleSendVerificationCode}>
+        <form onSubmit={mode === 'login' ? handleLogin : (mode === 'register' ? handleSendVerificationCode : handleRegister)}>
           {error && (
             <div className="bg-red-500 bg-opacity-10 text-red-500 px-4 py-2 rounded-lg mb-4">
               {error}
