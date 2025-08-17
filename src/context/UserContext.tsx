@@ -6,6 +6,7 @@ interface UserProfile {
   id: string;
   email: string;
   unique_id: string;
+  referral_code: string;
   created_at: string;
   updated_at: string;
 }
@@ -97,6 +98,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
+      // Check for referral code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralCode = urlParams.get('ref');
+      
       // Send magic link for signup/login
       const { error } = await supabase.auth.signInWithOtp({
         email
@@ -118,6 +123,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          data: {
+            referral_code: referralCode
+          }
+        }
       });
       
       if (error) throw error;
