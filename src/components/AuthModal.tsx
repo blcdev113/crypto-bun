@@ -229,8 +229,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 Processing...
               </div>
             ) : mode === 'login' ? 'Login' : 
-               mode === 'register' ? 'Register & Send Code' : 
-                'Send Login Code'}
+               mode === 'register' ? 'Register & Send Magic Link' : 
+                'Send Magic Link'}
           </button>
 
           {mode === 'login' && (
