@@ -1,16 +1,16 @@
-import React, { createContext, useContext, useState } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface UserContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signInWithOtp: (email: string) => Promise<void>;
+  verifyOtp: (email: string, token: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -25,50 +25,122 @@ export const useUser = () => {
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock successful login
-      setUser({
-        id: Math.random().toString(36).substring(7),
-        email
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-    } catch (error) {
-      throw new Error('Login failed');
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Sign up failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock successful registration
-      setUser({
-        id: Math.random().toString(36).substring(7),
-        email
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-    } catch (error) {
-      throw new Error('Registration failed');
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Sign in failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
+  const signInWithOtp = async (email: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (email: string, token: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'Sign out failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, login, register, logout }}>
+    <UserContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      signUp, 
+      signIn, 
+      signInWithOtp, 
+      verifyOtp, 
+      signOut 
+    }}>
       {children}
     </UserContext.Provider>
   );

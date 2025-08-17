@@ -6,12 +6,16 @@ import AuthModal from './AuthModal';
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useUser();
+  const { user, signOut } = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
-  const handleLogout = () => {
-    logout();
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   return (
@@ -26,11 +30,11 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-400">Welcome, {user.email}</span>
             <button
-              onClick={handleLogout}
+              onClick={handleSignOut}
               className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg"
             >
               <LogOut size={16} />
-              <span>Logout</span>
+              <span>Sign Out</span>
             </button>
           </div>
         ) : (
