@@ -48,10 +48,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      if (!data) {
+        console.log('No user profile found, user may need to complete registration');
         return;
       }
 
@@ -140,9 +145,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyOtp = async (email: string, token: string) => {
-    // Magic links don't need manual verification
-    // The link in the email will automatically authenticate the user
-    return Promise.resolve();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(error.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetPassword = async (email: string) => {

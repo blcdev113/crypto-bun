@@ -87,7 +87,7 @@ const AccountDropdown: React.FC = () => {
       label: 'Security',
       onClick: () => console.log('Security clicked'),
       disabled: false,
-      hasSubmenu: true
+      hasSubmenu: true,
     },
     {
       icon: Trash2,
