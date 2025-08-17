@@ -4,12 +4,9 @@ import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
-  email: string;
-  unique_id: string;
   referral_code: string;
   referred_by: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 interface UserContextType {
@@ -46,7 +43,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
@@ -98,24 +95,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, referralCode?: string) => {
     setLoading(true);
     try {
-      const signUpData: any = {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password
-      };
-
-      // Add referral code to user metadata if provided
-      if (referralCode) {
-        signUpData.options = {
-          data: {
-            referral_code: referralCode
-          }
-        };
-      }
-
-      const { error } = await supabase.auth.signUp(signUpData);
+      });
       
       if (error) {
         throw error;
+      }
+
+      // Apply referral code if provided and user was created
+      if (referralCode && data.user) {
+        try {
+          const { error: referralError } = await supabase.rpc('apply_referral', {
+            invite_code: referralCode
+          });
+          
+          if (referralError) {
+            console.error('Failed to apply referral code:', referralError);
+          }
+        } catch (referralError) {
+          console.error('Error applying referral code:', referralError);
+        }
       }
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');

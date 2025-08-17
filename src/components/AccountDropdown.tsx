@@ -17,11 +17,10 @@ import {
 const AccountDropdown: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
+  const [copiedReferral, setCopiedReferral] = useState(false);
   const [copiedReferral, setCopiedReferral] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const userId = userProfile?.unique_id || '';
   const referralCode = userProfile?.referral_code || '';
 
   useEffect(() => {
@@ -34,12 +33,6 @@ const AccountDropdown: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleCopyId = () => {
-    navigator.clipboard.writeText(userId);
-    setCopiedId(true);
-    setTimeout(() => setCopiedId(false), 2000);
-  };
 
   const handleCopyReferral = () => {
     navigator.clipboard.writeText(referralCode);
@@ -128,15 +121,15 @@ const AccountDropdown: React.FC = () => {
                 <div className="text-white font-medium truncate">
                   {user.email}
                 </div>
-                {userId && (
+                {referralCode && (
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-sm text-gray-400">ID:</span>
-                    <span className="text-sm text-white font-mono">{userId}</span>
+                    <span className="text-sm text-gray-400">Referral:</span>
+                    <span className="text-sm text-white font-mono">{referralCode}</span>
                     <button
-                      onClick={handleCopyId}
+                      onClick={handleCopyReferral}
                       className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
                     >
-                      {copiedId ? (
+                      {copiedReferral ? (
                         <CheckCircle size={16} />
                       ) : (
                         <Copy size={16} />
@@ -145,22 +138,6 @@ const AccountDropdown: React.FC = () => {
                   </div>
                 )}
               </div>
-              {referralCode && (
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm text-gray-400">Referral:</span>
-                  <span className="text-sm text-white font-mono">{referralCode}</span>
-                  <button
-                    onClick={handleCopyReferral}
-                    className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
-                  >
-                    {copiedReferral ? (
-                      <CheckCircle size={16} />
-                    ) : (
-                      <Copy size={16} />
-                    )}
-                  </button>
-                </div>
-              )}
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded text-xs font-bold">
                 VIP0
               </div>
