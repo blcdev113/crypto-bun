@@ -85,6 +85,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       // Generate a 6-digit verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
+      // Store the code in the database first
+      const supabaseResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/verification_codes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          code: verificationCode,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+        }),
+      });
+
+      if (!supabaseResponse.ok) {
+        const errorData = await supabaseResponse.json();
+        throw new Error(errorData.message || 'Failed to store verification code');
+      }
+
       // Store the code in the database and send email
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-email`, {
         method: 'POST',
@@ -103,25 +123,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         throw new Error(errorData.error || 'Failed to send verification email');
       }
 
-      // Store the code in the database for verification
-      const supabaseResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/verification_codes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({
-          email,
-          code: verificationCode,
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
-        }),
-      });
-
-      if (!supabaseResponse.ok) {
-        throw new Error('Failed to store verification code');
-      }
-      
       setShowVerificationStep(true);
       setVerificationSent(true);
       setSuccess(`Verification code sent to ${email}`);
@@ -191,6 +192,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       // Generate a new 6-digit verification code
       const newVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
+      // Store the new code in the database first
+      const supabaseResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/verification_codes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          code: newVerificationCode,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+        }),
+      });
+
+      if (!supabaseResponse.ok) {
+        const errorData = await supabaseResponse.json();
+        throw new Error(errorData.message || 'Failed to store verification code');
+      }
+
       // Send new verification email
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-email`, {
         method: 'POST',
@@ -209,25 +230,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         throw new Error(errorData.error || 'Failed to resend verification email');
       }
 
-      // Store the new code in the database
-      const supabaseResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/verification_codes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({
-          email,
-          code: newVerificationCode,
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
-        }),
-      });
-
-      if (!supabaseResponse.ok) {
-        throw new Error('Failed to store verification code');
-      }
-      
       setSuccess(`New verification code sent to ${email}`);
       setResendCooldown(60);
       
