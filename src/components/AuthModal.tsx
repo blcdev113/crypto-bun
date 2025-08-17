@@ -27,11 +27,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     setEmail('');
     setPassword('');
     setConfirmPassword('');
-    setOtpCode('');
     setAgreeToTerms(false);
     setError('');
     setSuccess('');
-    setShowSuccess(false);
+    setMode('login');
   };
 
   const handleClose = () => {
@@ -249,6 +248,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
           {mode === 'login' && (
             <div className="text-center mb-4">
+              <button
+                type="button"
+                onClick={() => setMode('forgot-password')}
+                className="text-[#22C55E] hover:underline text-sm mr-4"
+              >
+                Forgot Password?
+              </button>
               <button
                 type="button"
                 onClick={() => setMode('otp-login')}
