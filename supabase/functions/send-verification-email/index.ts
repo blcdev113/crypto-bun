@@ -49,7 +49,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const { to } = body;
+    const { to, code } = body;
 
     // Get Resend API key from environment variables
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -74,7 +74,19 @@ serve(async (req: Request) => {
         from: "Acme <onboarding@resend.dev>",
         to: [to],
         subject: "Verify your email 🚀",
-        html: `<h1>Hello!</h1><p>Click <a href="https://your-app.com/verify?email=${to}">here</a> to verify your email.</p>`
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #22C55E;">TX Exchange Email Verification</h1>
+            <p>Hello!</p>
+            <p>Your verification code is:</p>
+            <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+              ${code || 'N/A'}
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this verification, please ignore this email.</p>
+            <p>Best regards,<br>TX Exchange Team</p>
+          </div>
+        `
       }),
     });
 
