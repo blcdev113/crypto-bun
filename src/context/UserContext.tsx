@@ -52,50 +52,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Store password temporarily for after OTP verification
-      sessionStorage.setItem('pendingPassword', password);
-      
-      // Send OTP for email verification
+      // Send OTP (signup or login in one call)
       const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false, // Don't create user yet
-        }
+        email
       });
       
       if (error) {
-        sessionStorage.removeItem('pendingPassword');
         throw error;
       }
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendRegistrationOtp = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      // Store password temporarily for after OTP verification
-      sessionStorage.setItem('pendingPassword', password);
-      sessionStorage.setItem('pendingEmail', email);
-      
-      // Send OTP for email verification during registration
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
-      
-      if (error) {
-        sessionStorage.removeItem('pendingPassword');
-        sessionStorage.removeItem('pendingEmail');
-        throw error;
-      }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
@@ -120,11 +86,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithOtp = async (email: string) => {
     setLoading(true);
     try {
+      // Send OTP (signup or login in one call)
       const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
+        email
       });
       
       if (error) throw error;
@@ -138,37 +102,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyOtp = async (email: string, token: string) => {
     setLoading(true);
     try {
+      // Verify OTP
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token,
-        type: 'email'
+        type: "email",
       });
       
       if (error) throw error;
-      
-      // Check if this is a registration verification
-      const pendingPassword = sessionStorage.getItem('pendingPassword');
-      const pendingEmail = sessionStorage.getItem('pendingEmail');
-      
-      if (pendingPassword && pendingEmail && email === pendingEmail) {
-        // Complete the registration by creating the user account
-        sessionStorage.removeItem('pendingPassword');
-        sessionStorage.removeItem('pendingEmail');
-        
-        // Sign out the temporary session
-        await supabase.auth.signOut();
-        
-        // Now create the actual user account
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: pendingPassword,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`
-          }
-        });
-        
-        if (signUpError) throw signUpError;
-      }
     } catch (error: any) {
       throw new Error(error.message || 'OTP verification failed');
     } finally {
@@ -196,7 +137,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signUp, 
       signIn, 
       signInWithOtp, 
-      sendRegistrationOtp,
       verifyOtp, 
       signOut 
     }}>
