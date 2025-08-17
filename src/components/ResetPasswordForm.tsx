@@ -1,6 +1,6 @@
+import { supabase } from '../lib/supabase';
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { supabase } from '../lib/supabase';
 import { Eye, EyeOff, Check, Loader2 } from 'lucide-react';
 
 const ResetPasswordForm: React.FC = () => {
@@ -42,11 +42,15 @@ const ResetPasswordForm: React.FC = () => {
 
     try {
       await updatePassword(newPassword);
+      
+      // Sign out the user after password reset
+      await supabase.auth.signOut();
+      
       setSuccess(true);
       
-      // User is now automatically logged in with new password
+      // Redirect to login page after password reset
       setTimeout(() => {
-        window.location.href = '/'; // Redirect to main app (user is already logged in)
+        window.location.href = '/'; // Redirect to login screen
       }, 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to update password');
