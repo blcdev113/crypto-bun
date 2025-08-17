@@ -6,6 +6,9 @@ interface UserProfile {
   id: string;
   email: string;
   unique_id: string;
+  referral_code: string;
+  referred_by: string | null;
+  referral_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +23,7 @@ interface UserContextType {
   signInWithOtp: (email: string) => Promise<void>;
   sendRegistrationOtp: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
+  handleReferralSignup: (userId: string, referralCode?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -214,6 +218,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signInWithOtp, 
       resetPassword,
       updatePassword,
+      handleReferralSignup,
       verifyOtp, 
       signOut 
     }}>

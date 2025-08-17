@@ -61,7 +61,7 @@ const AccountDropdown: React.FC = () => {
     {
       icon: Share2,
       label: 'Share With Friends',
-      onClick: () => console.log('Share With Friends clicked'),
+      onClick: handleCopyReferral,
       disabled: false
     },
     {
