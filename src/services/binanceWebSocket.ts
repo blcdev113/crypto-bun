@@ -65,7 +65,7 @@ class BinanceWebSocket {
   private async fetch24hData() {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(BINANCE_REST_URL, {
         signal: controller.signal,
