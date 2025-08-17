@@ -1,15 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
-import { ReferralHandler } from '../utils/referralHandler';
 
 interface UserProfile {
   id: string;
   email: string;
   unique_id: string;
-  referral_code: string;
-  referred_by: string | null;
-  referral_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -24,7 +20,6 @@ interface UserContextType {
   signInWithOtp: (email: string) => Promise<void>;
   sendRegistrationOtp: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
-  handleReferralSignup: (userId: string, referralCode?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -102,22 +97,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Get referral code from cookie before signup
-      const referralCode = ReferralHandler.getActiveReferralCode();
-      
       // Send magic link for signup/login
       const { error } = await supabase.auth.signInWithOtp({
-        email,
-        data: referralCode ? { referral_code: referralCode } : undefined
+        email
       });
       
       if (error) {
         throw error;
-      }
-      
-      // Clear referral cookie after successful signup attempt
-      if (referralCode) {
-        ReferralHandler.clearReferralCookie();
       }
     } catch (error: any) {
       throw new Error(error.message || 'Sign up failed');
@@ -228,7 +214,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signInWithOtp, 
       resetPassword,
       updatePassword,
-      handleReferralSignup,
       verifyOtp, 
       signOut 
     }}>
