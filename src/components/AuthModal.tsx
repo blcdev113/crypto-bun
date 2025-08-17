@@ -105,16 +105,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         throw new Error(errorData.message || 'Failed to store verification code');
       }
 
-      // Store the code in the database and send email
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-email`, {
+      // Send verification email
+      const response = await fetch('/functions/v1/send-verification-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          email,
-          code: verificationCode
+          to: email
         }),
       });
 
