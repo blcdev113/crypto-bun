@@ -6,6 +6,8 @@ interface UserProfile {
   id: string;
   email: string;
   unique_id: string;
+  referral_code: string;
+  referred_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -15,10 +17,9 @@ interface UserContextType {
   userProfile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, referralCode?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithOtp: (email: string) => Promise<void>;
-  sendRegistrationOtp: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
@@ -94,13 +95,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, referralCode?: string) => {
     setLoading(true);
     try {
-      // Send magic link for signup/login
-      const { error } = await supabase.auth.signInWithOtp({
-        email
-      });
+      const signUpData: any = {
+        email,
+        password
+      };
+
+      // Add referral code to user metadata if provided
+      if (referralCode) {
+        signUpData.options = {
+          data: {
+            referral_code: referralCode
+          }
+        };
+      }
+
+      const { error } = await supabase.auth.signUp(signUpData);
       
       if (error) {
         throw error;

@@ -14,6 +14,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
@@ -27,6 +28,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     setEmail('');
     setPassword('');
     setConfirmPassword('');
+    setReferralCode('');
     setAgreeToTerms(false);
     setError('');
     setSuccess('');
@@ -53,7 +55,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
     }
 
     try {
-      await signUp(email, password);
+      await signUp(email, password, referralCode || undefined);
       setSuccess('Magic link sent to your email! Please check your inbox and click the link to complete registration.');
       // Don't change mode - user will be redirected from email
     } catch (err: any) {
@@ -229,6 +231,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 </span>
               </div>
             </>
+          )}
+
+          {mode === 'register' && (
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-1">
+                Referral Code (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="Enter referral code"
+                  className="w-full bg-[#1E293B] text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#22C55E]"
+                />
+                <div className="absolute left-3 top-2.5 text-gray-400">
+                  <span className="text-sm">🎁</span>
+                </div>
+              </div>
+            </div>
           )}
 
           <button

@@ -15,13 +15,14 @@ import {
 } from 'lucide-react';
 
 const AccountDropdown: React.FC = () => {
-  const { user, signOut } = useUser();
+  const { user, userProfile, signOut } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+  const [copiedReferral, setCopiedReferral] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Generate a mock user ID for display
-  const userId = user ? `9HDDRD0RS000` : '';
+  const userId = userProfile?.unique_id || '';
+  const referralCode = userProfile?.referral_code || '';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,6 +41,11 @@ const AccountDropdown: React.FC = () => {
     setTimeout(() => setCopiedId(false), 2000);
   };
 
+  const handleCopyReferral = () => {
+    navigator.clipboard.writeText(referralCode);
+    setCopiedReferral(true);
+    setTimeout(() => setCopiedReferral(false), 2000);
+  };
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -139,6 +145,22 @@ const AccountDropdown: React.FC = () => {
                   </div>
                 )}
               </div>
+              {referralCode && (
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-sm text-gray-400">Referral:</span>
+                  <span className="text-sm text-white font-mono">{referralCode}</span>
+                  <button
+                    onClick={handleCopyReferral}
+                    className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
+                  >
+                    {copiedReferral ? (
+                      <CheckCircle size={16} />
+                    ) : (
+                      <Copy size={16} />
+                    )}
+                  </button>
+                </div>
+              )}
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded text-xs font-bold">
                 VIP0
               </div>
