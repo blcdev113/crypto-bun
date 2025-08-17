@@ -68,20 +68,33 @@ serve(async (req) => {
       <p>If you didn't request this code, please ignore this email.</p>
     `
 
-    // Use Supabase's built-in email service
-    const { error: emailError } = await supabase.auth.admin.generateLink({
-      type: 'signup',
-      email,
-      options: {
-        data: {
-          verification_code: code,
-          custom_email: true
-        }
-      }
-    })
+    // Send email using Supabase's email service
+    const { error: emailError } = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'TX Exchange <noreply@txexchange.com>',
+        to: [email],
+        subject: emailSubject,
+        html: emailBody,
+      }),
+    }).then(res => res.json()).then(data => data.error || null)
 
-    // For now, we'll simulate email sending since we're using the verification code approach
-    console.log(`Verification code for ${email}: ${code}`)
+    if (emailError) {
+      console.error('Email sending error:', emailError)
+      // Fallback: log the code for development
+      console.log(`📧 Verification code for ${email}: ${code}`)
+    } else {
+      console.log(`✅ Email sent successfully to ${email}`)
+    }
+
+    // Always log the code in development for testing
+    if (Deno.env.get('ENVIRONMENT') === 'development') {
+      console.log(`🔑 DEV: Verification code for ${email}: ${code}`)
+    }
 
     return new Response(
       JSON.stringify({ 
