@@ -122,20 +122,22 @@ const AccountDropdown: React.FC = () => {
                 <div className="text-white font-medium truncate">
                   {user.email}
                 </div>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm text-gray-400">ID:</span>
-                  <span className="text-sm text-white font-mono">{userId}</span>
-                  <button
-                    onClick={handleCopyId}
-                    className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
-                  >
-                    {copiedId ? (
-                      <CheckCircle size={16} />
-                    ) : (
-                      <Copy size={16} />
-                    )}
-                  </button>
-                </div>
+                {userId && (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-sm text-gray-400">ID:</span>
+                    <span className="text-sm text-white font-mono">{userId}</span>
+                    <button
+                      onClick={handleCopyId}
+                      className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
+                    >
+                      {copiedId ? (
+                        <CheckCircle size={16} />
+                      ) : (
+                        <Copy size={16} />
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded text-xs font-bold">
                 VIP0
