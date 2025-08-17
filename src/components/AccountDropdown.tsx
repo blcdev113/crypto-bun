@@ -16,15 +16,12 @@ import {
 
 const AccountDropdown: React.FC = () => {
   const { user, signOut } = useUser();
-  const { userProfile } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
-  const [copiedReferral, setCopiedReferral] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate a mock user ID for display
-  const userId = userProfile?.unique_id || '';
-  const referralCode = userProfile?.referral_code || '';
+  const userId = user ? `9HDDRD0RS000` : '';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -41,12 +38,6 @@ const AccountDropdown: React.FC = () => {
     navigator.clipboard.writeText(userId);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
-  };
-
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralCode);
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 2000);
   };
 
   const handleSignOut = async () => {
@@ -140,22 +131,6 @@ const AccountDropdown: React.FC = () => {
                       className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
                     >
                       {copiedId ? (
-                        <CheckCircle size={16} />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </button>
-                  </div>
-                )}
-                {referralCode && (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-sm text-gray-400">Referral:</span>
-                    <span className="text-sm text-white font-mono">{referralCode}</span>
-                    <button
-                      onClick={handleCopyReferral}
-                      className="text-[#22C55E] hover:text-[#16A34A] transition-colors"
-                    >
-                      {copiedReferral ? (
                         <CheckCircle size={16} />
                       ) : (
                         <Copy size={16} />
