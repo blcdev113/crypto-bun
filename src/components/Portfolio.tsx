@@ -16,27 +16,8 @@ const Portfolio: React.FC = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [prices, setPrices] = useState<any[]>([]);
   const [activeAccount, setActiveAccount] = useState<'trading' | 'funding'>('trading');
-  const { tokenBalances, positions } = usePositions();
+  const { tokenBalances, tradingBalances, fundingBalances, positions, transferBetweenAccounts } = usePositions();
   const [todayPnl, setTodayPnl] = useState(0);
-  
-  // Separate balances for trading and funding accounts
-  const [tradingBalances, setTradingBalances] = useState(tokenBalances);
-  const [fundingBalances, setFundingBalances] = useState([
-    { symbol: 'USDT', balance: 0 },
-    { symbol: 'BTC', balance: 0 },
-    { symbol: 'ETH', balance: 0 },
-    { symbol: 'SOL', balance: 0 },
-    { symbol: 'BNB', balance: 0 },
-    { symbol: 'XRP', balance: 0 },
-    { symbol: 'ADA', balance: 0 },
-    { symbol: 'DOGE', balance: 0 },
-    { symbol: 'MATIC', balance: 0 },
-    { symbol: 'DOT', balance: 0 }
-  ]);
-  
-  useEffect(() => {
-    setTradingBalances(tokenBalances);
-  }, [tokenBalances]);
   
   useEffect(() => {
     const startOfDay = new Date();
@@ -262,23 +243,7 @@ const Portfolio: React.FC = () => {
         onClose={() => setShowTransferModal(false)}
         tradingBalances={tradingBalances}
         fundingBalances={fundingBalances}
-        onTransfer={(from, to, token, amount) => {
-          if (from === 'trading') {
-            setTradingBalances(prev => prev.map(t => 
-              t.symbol === token ? { ...t, balance: t.balance - amount } : t
-            ));
-            setFundingBalances(prev => prev.map(t => 
-              t.symbol === token ? { ...t, balance: t.balance + amount } : t
-            ));
-          } else {
-            setFundingBalances(prev => prev.map(t => 
-              t.symbol === token ? { ...t, balance: t.balance - amount } : t
-            ));
-            setTradingBalances(prev => prev.map(t => 
-              t.symbol === token ? { ...t, balance: t.balance + amount } : t
-            ));
-          }
-        }}
+        onTransfer={transferBetweenAccounts}
       />
     </>
   );

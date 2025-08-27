@@ -44,7 +44,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [withdrawalDetails, setWithdrawalDetails] = useState<any>(null);
-  const { tokenBalances } = usePositions();
+  const { fundingBalances } = usePositions();
 
   if (!isOpen) return null;
 
@@ -87,7 +87,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleSetMaxAmount = () => {
-    const token = tokenBalances.find(t => t.symbol === selectedToken);
+    const token = fundingBalances.find(t => t.symbol === selectedToken);
     if (token) {
       setWithdrawalAmount(token.balance.toString());
     }
@@ -138,7 +138,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   }
 
   const renderTokenList = () => {
-    const filteredTokens = tokenBalances.filter(token =>
+    const filteredTokens = fundingBalances.filter(token =>
       token.balance > 0 && token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -199,7 +199,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose }) => {
   };
 
   const renderWithdrawalForm = () => {
-    const token = tokenBalances.find(t => t.symbol === selectedToken);
+    const token = fundingBalances.find(t => t.symbol === selectedToken);
     if (!token) return null;
 
     const logo = cryptoLogos[token.symbol];

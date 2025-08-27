@@ -26,10 +26,13 @@ interface PositionContextType {
   positions: Position[];
   portfolioBalance: number;
   tokenBalances: TokenBalance[];
+  tradingBalances: TokenBalance[];
+  fundingBalances: TokenBalance[];
   openPosition: (position: Omit<Position, 'id' | 'status' | 'openTime' | 'initialBalance'>) => Position;
   closePosition: (id: string) => void;
   updateUsdtBalance: (amount: number) => void;
   convertTokens: (fromToken: string, toToken: string, amount: number, rate: number) => void;
+  transferBetweenAccounts: (from: 'trading' | 'funding', to: 'trading' | 'funding', token: string, amount: number) => void;
 }
 
 const PositionContext = createContext<PositionContextType | undefined>(undefined);
@@ -49,9 +52,21 @@ interface PositionProviderProps {
 export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) => {
   const { user } = useUser();
   const [positions, setPositions] = useState<Position[]>([]);
-  const [portfolioBalance, setPortfolioBalance] = useState(10000); // Start with $10,000
-  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([
+  const [portfolioBalance, setPortfolioBalance] = useState(10000);
+  const [tradingBalances, setTradingBalances] = useState<TokenBalance[]>([
     { symbol: 'USDT', balance: 10000 },
+    { symbol: 'BTC', balance: 0 },
+    { symbol: 'ETH', balance: 0 },
+    { symbol: 'SOL', balance: 0 },
+    { symbol: 'BNB', balance: 0 },
+    { symbol: 'XRP', balance: 0 },
+    { symbol: 'ADA', balance: 0 },
+    { symbol: 'DOGE', balance: 0 },
+    { symbol: 'MATIC', balance: 0 },
+    { symbol: 'DOT', balance: 0 }
+  ]);
+  const [fundingBalances, setFundingBalances] = useState<TokenBalance[]>([
+    { symbol: 'USDT', balance: 0 },
     { symbol: 'BTC', balance: 0 },
     { symbol: 'ETH', balance: 0 },
     { symbol: 'SOL', balance: 0 },
@@ -68,8 +83,20 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
   useEffect(() => {
     if (user) {
       setPortfolioBalance(10000);
-      setTokenBalances([
+      setTradingBalances([
         { symbol: 'USDT', balance: 10000 },
+        { symbol: 'BTC', balance: 0 },
+        { symbol: 'ETH', balance: 0 },
+        { symbol: 'SOL', balance: 0 },
+        { symbol: 'BNB', balance: 0 },
+        { symbol: 'XRP', balance: 0 },
+        { symbol: 'ADA', balance: 0 },
+        { symbol: 'DOGE', balance: 0 },
+        { symbol: 'MATIC', balance: 0 },
+        { symbol: 'DOT', balance: 0 }
+      ]);
+      setFundingBalances([
+        { symbol: 'USDT', balance: 0 },
         { symbol: 'BTC', balance: 0 },
         { symbol: 'ETH', balance: 0 },
         { symbol: 'SOL', balance: 0 },
@@ -131,13 +158,13 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
   const updateUsdtBalance = useCallback((amount: number) => {
     const newBalance = portfolioBalance + amount;
     setPortfolioBalance(newBalance);
-    setTokenBalances(prev => prev.map(token => 
+    setTradingBalances(prev => prev.map(token => 
       token.symbol === 'USDT' ? { ...token, balance: token.balance + amount } : token
     ));
   }, [portfolioBalance]);
 
   const convertTokens = useCallback((fromToken: string, toToken: string, amount: number, rate: number) => {
-    setTokenBalances(prev => {
+    setTradingBalances(prev => {
       const newBalances = [...prev];
       const fromIndex = newBalances.findIndex(t => t.symbol === fromToken);
       const toIndex = newBalances.findIndex(t => t.symbol === toToken);
@@ -172,8 +199,9 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
     // Calculate required margin
     const margin = (positionData.amount * positionData.entryPrice) / positionData.leverage;
     
-    // Check if user has enough balance for margin
-    if (margin > portfolioBalance) {
+    // Check if user has enough USDT balance in trading account for margin
+    const tradingUsdtBalance = tradingBalances.find(t => t.symbol === 'USDT')?.balance || 0;
+    if (margin > tradingUsdtBalance) {
       throw new Error('Insufficient balance to open position');
     }
 
@@ -189,8 +217,33 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
     };
 
     setPositions(prev => [...prev, newPosition]);
+    
+    // Deduct margin from trading account USDT balance
+    setTradingBalances(prev => prev.map(token => 
+      token.symbol === 'USDT' ? { ...token, balance: token.balance - margin } : token
+    ));
+    setPortfolioBalance(prev => prev - margin);
+    
     return newPosition;
-  }, [portfolioBalance]);
+  }, [tradingBalances, portfolioBalance]);
+
+  const transferBetweenAccounts = useCallback((from: 'trading' | 'funding', to: 'trading' | 'funding', token: string, amount: number) => {
+    if (from === 'trading') {
+      setTradingBalances(prev => prev.map(t => 
+        t.symbol === token ? { ...t, balance: t.balance - amount } : t
+      ));
+      setFundingBalances(prev => prev.map(t => 
+        t.symbol === token ? { ...t, balance: t.balance + amount } : t
+      ));
+    } else {
+      setFundingBalances(prev => prev.map(t => 
+        t.symbol === token ? { ...t, balance: t.balance - amount } : t
+      ));
+      setTradingBalances(prev => prev.map(t => 
+        t.symbol === token ? { ...t, balance: t.balance + amount } : t
+      ));
+    }
+  }, []);
 
   const closePosition = useCallback((id: string) => {
     setPositions(prev => {
@@ -217,8 +270,12 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
       // Calculate PNL percentage relative to margin
       const pnlPercent = (pnl / margin) * 100;
 
-      // Update user's balance with PNL
-      updateUsdtBalance(pnl);
+      // Return margin + PNL to trading account
+      const totalReturn = margin + pnl;
+      setTradingBalances(prev => prev.map(token => 
+        token.symbol === 'USDT' ? { ...token, balance: token.balance + totalReturn } : token
+      ));
+      setPortfolioBalance(prev => prev + totalReturn);
 
       return prev.map(pos =>
         pos.id === id ? {
@@ -230,17 +287,20 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
         } : pos
       );
     });
-  }, [currentPrices, updateUsdtBalance]);
+  }, [currentPrices]);
 
   return (
     <PositionContext.Provider value={{ 
       positions, 
       portfolioBalance, 
-      tokenBalances,
+      tokenBalances: tradingBalances,
+      tradingBalances,
+      fundingBalances,
       openPosition, 
       closePosition, 
       updateUsdtBalance,
-      convertTokens 
+      convertTokens,
+      transferBetweenAccounts
     }}>
       {children}
     </PositionContext.Provider>
