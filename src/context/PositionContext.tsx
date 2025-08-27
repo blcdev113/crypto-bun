@@ -22,12 +22,24 @@ interface TokenBalance {
   balance: number;
 }
 
+interface ConversionRecord {
+  id: string;
+  fromToken: string;
+  toToken: string;
+  fromAmount: number;
+  toAmount: number;
+  rate: number;
+  timestamp: Date;
+  status: 'completed' | 'pending' | 'failed';
+}
+
 interface PositionContextType {
   positions: Position[];
   portfolioBalance: number;
   tokenBalances: TokenBalance[];
   tradingBalances: TokenBalance[];
   fundingBalances: TokenBalance[];
+  conversionHistory: ConversionRecord[];
   openPosition: (position: Omit<Position, 'id' | 'status' | 'openTime' | 'initialBalance'>) => Position;
   closePosition: (id: string) => void;
   updateUsdtBalance: (amount: number) => void;
@@ -53,6 +65,7 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
   const { user } = useUser();
   const [positions, setPositions] = useState<Position[]>([]);
   const [portfolioBalance, setPortfolioBalance] = useState(10000);
+  const [conversionHistory, setConversionHistory] = useState<ConversionRecord[]>([]);
   const [tradingBalances, setTradingBalances] = useState<TokenBalance[]>([
     { symbol: 'USDT', balance: 10000 },
     { symbol: 'BTC', balance: 0 },
@@ -108,6 +121,7 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
         { symbol: 'DOT', balance: 0 }
       ]);
       setPositions([]);
+      setConversionHistory([]);
     }
   }, [user]);
 
@@ -164,6 +178,20 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
   }, [portfolioBalance]);
 
   const convertTokens = useCallback((fromToken: string, toToken: string, amount: number, rate: number) => {
+    // Create conversion record
+    const conversionRecord: ConversionRecord = {
+      id: Math.random().toString(36).substring(7),
+      fromToken,
+      toToken,
+      fromAmount: amount,
+      toAmount: amount * rate,
+      rate,
+      timestamp: new Date(),
+      status: 'completed'
+    };
+
+    setConversionHistory(prev => [conversionRecord, ...prev]);
+
     setTradingBalances(prev => {
       const newBalances = [...prev];
       const fromIndex = newBalances.findIndex(t => t.symbol === fromToken);
@@ -296,6 +324,7 @@ export const PositionProvider: React.FC<PositionProviderProps> = ({ children }) 
       tokenBalances: tradingBalances,
       tradingBalances,
       fundingBalances,
+      conversionHistory,
       openPosition, 
       closePosition, 
       updateUsdtBalance,

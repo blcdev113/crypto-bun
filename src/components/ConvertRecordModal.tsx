@@ -2,95 +2,22 @@ import React, { useState } from 'react';
 import { X, ArrowRightLeft, Calendar, Filter } from 'lucide-react';
 import { cryptoLogos } from '../utils/cryptoLogos';
 import { formatCurrency } from '../utils/formatters';
+import { usePositions } from '../context/PositionContext';
 
 interface ConvertRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface ConvertRecord {
-  id: string;
-  fromToken: string;
-  toToken: string;
-  fromAmount: number;
-  toAmount: number;
-  rate: number;
-  timestamp: Date;
-  status: 'completed' | 'pending' | 'failed';
-}
-
-// Mock conversion records - in real app this would come from database
-const mockConvertRecords: ConvertRecord[] = [
-  {
-    id: '1',
-    fromToken: 'USDT',
-    toToken: 'BTC',
-    fromAmount: 1000,
-    toAmount: 0.01592,
-    rate: 62814.07,
-    timestamp: new Date('2024-01-15T10:30:00'),
-    status: 'completed'
-  },
-  {
-    id: '2',
-    fromToken: 'BTC',
-    toToken: 'ETH',
-    fromAmount: 0.005,
-    toAmount: 0.12456,
-    rate: 24.912,
-    timestamp: new Date('2024-01-14T15:45:00'),
-    status: 'completed'
-  },
-  {
-    id: '3',
-    fromToken: 'ETH',
-    toToken: 'USDT',
-    fromAmount: 0.5,
-    toAmount: 1205.50,
-    rate: 2411.00,
-    timestamp: new Date('2024-01-13T09:15:00'),
-    status: 'completed'
-  },
-  {
-    id: '4',
-    fromToken: 'USDT',
-    toToken: 'SOL',
-    fromAmount: 500,
-    toAmount: 5.2631,
-    rate: 95.00,
-    timestamp: new Date('2024-01-12T14:20:00'),
-    status: 'completed'
-  },
-  {
-    id: '5',
-    fromToken: 'SOL',
-    toToken: 'USDT',
-    fromAmount: 2.5,
-    toAmount: 237.50,
-    rate: 95.00,
-    timestamp: new Date('2024-01-11T11:30:00'),
-    status: 'completed'
-  },
-  {
-    id: '6',
-    fromToken: 'USDT',
-    toToken: 'BNB',
-    fromAmount: 300,
-    toAmount: 0.9677,
-    rate: 310.00,
-    timestamp: new Date('2024-01-10T16:45:00'),
-    status: 'completed'
-  }
-];
 
 const ConvertRecordModal: React.FC<ConvertRecordModalProps> = ({ isOpen, onClose }) => {
-  const [records] = useState<ConvertRecord[]>(mockConvertRecords);
+  const { conversionHistory } = usePositions();
   const [filterToken, setFilterToken] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
 
   if (!isOpen) return null;
 
-  const filteredRecords = records.filter(record => {
+  const filteredRecords = conversionHistory.filter(record => {
     if (filterToken !== 'all' && record.fromToken !== filterToken && record.toToken !== filterToken) {
       return false;
     }
@@ -143,8 +70,8 @@ const ConvertRecordModal: React.FC<ConvertRecordModalProps> = ({ isOpen, onClose
   };
 
   const uniqueTokens = Array.from(new Set([
-    ...records.map(r => r.fromToken),
-    ...records.map(r => r.toToken)
+    ...conversionHistory.map(r => r.fromToken),
+    ...conversionHistory.map(r => r.toToken)
   ])).sort();
 
   return (
@@ -282,7 +209,7 @@ const ConvertRecordModal: React.FC<ConvertRecordModalProps> = ({ isOpen, onClose
               <p className="text-gray-400 mb-4">
                 {filterToken !== 'all' || dateFilter !== 'all' 
                   ? 'No conversions found for the selected filters.'
-                  : 'You haven\'t made any conversions yet.'
+                  : 'You haven\'t made any conversions yet. Use the Convert feature to exchange between cryptocurrencies.'
                 }
               </p>
               {filterToken !== 'all' || dateFilter !== 'all' ? (
@@ -305,10 +232,10 @@ const ConvertRecordModal: React.FC<ConvertRecordModalProps> = ({ isOpen, onClose
           <div className="p-6 border-t border-gray-700">
             <div className="flex justify-between items-center text-sm">
               <div className="text-gray-400">
-                Showing {filteredRecords.length} of {records.length} conversions
+                Showing {filteredRecords.length} of {conversionHistory.length} conversions
               </div>
               <div className="text-gray-400">
-                Total conversions: {records.length}
+                Total conversions: {conversionHistory.length}
               </div>
             </div>
           </div>
