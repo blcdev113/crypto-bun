@@ -3,6 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import { Moon, Sun, Zap, LogOut, Download, ChevronDown, Globe, User, Copy, Wallet, Share2, History, FileText, Shield, Trash2 } from 'lucide-react';
 import AuthModal from './AuthModal';
+import AssetWalletsModal from './AssetWalletsModal';
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: 'https://flagcdn.com/w20/us.png', country: 'US' },
@@ -25,6 +26,7 @@ const Header: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showAssetWalletsModal, setShowAssetWalletsModal] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -106,7 +108,10 @@ const Header: React.FC = () => {
                   <div className="py-2">
                     <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
                       <Wallet size={18} />
-                      <span>Asset Wallets</span>
+                      <span onClick={() => {
+                        setShowAssetWalletsModal(true);
+                        setShowUserDropdown(false);
+                      }}>Asset Wallets</span>
                     </button>
                     
                     <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
@@ -259,6 +264,11 @@ const Header: React.FC = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
+      />
+
+      <AssetWalletsModal 
+        isOpen={showAssetWalletsModal}
+        onClose={() => setShowAssetWalletsModal(false)}
       />
     </header>
   );
