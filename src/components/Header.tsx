@@ -24,6 +24,7 @@ const Header: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const handleSignOut = async () => {
     try {
