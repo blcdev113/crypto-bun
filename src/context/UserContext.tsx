@@ -56,13 +56,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Send magic link for signup/login
       const { error } = await supabase.auth.signInWithOtp({
-        email
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
       });
       
       if (error) {
+        console.error('Magic link error:', error);
         throw error;
       }
+      
+      console.log('Magic link sent successfully to:', email);
     } catch (error: any) {
+      console.error('SignUp error:', error);
       throw new Error(error.message || 'Sign up failed');
     } finally {
       setLoading(false);
@@ -90,11 +97,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Send magic link for login
       const { error } = await supabase.auth.signInWithOtp({
-        email
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Magic link error:', error);
+        throw error;
+      }
+      
+      console.log('Magic link sent successfully to:', email);
     } catch (error: any) {
+      console.error('SignInWithOtp error:', error);
       throw new Error(error.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
@@ -114,8 +130,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         redirectTo: `${window.location.origin}/reset-password`
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Reset password error:', error);
+        throw error;
+      }
+      
+      console.log('Reset password email sent successfully to:', email);
     } catch (error: any) {
+      console.error('ResetPassword error:', error);
       throw new Error(error.message || 'Failed to send reset email');
     } finally {
       setLoading(false);
