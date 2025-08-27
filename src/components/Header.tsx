@@ -115,12 +115,6 @@ const Header: React.FC = () => {
                       <Wallet size={18} />
                       <span>Asset Wallets</span>
                     </button>
-                      onClick={() => {
-                        setShowUserDropdown(false);
-                        // Navigate to assets section - we'll need to pass this function from parent
-                        window.dispatchEvent(new CustomEvent('navigateToAssets'));
-                      }}
-                      className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white"
                       <span>Asset Wallets</span>
                     </button>
                     
