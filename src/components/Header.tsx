@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
-import { Moon, Sun, Zap } from 'lucide-react';
+import { Moon, Sun, Zap, LogOut } from 'lucide-react';
 import AuthModal from './AuthModal';
-import AccountDropdown from './AccountDropdown';
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useUser();
+  const { user, signOut } = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   return (
     <header className="bg-[#0F172A] text-white py-4 px-6 flex items-center justify-between border-b border-gray-800">
@@ -20,7 +27,16 @@ const Header: React.FC = () => {
       
       <div className="flex items-center space-x-4">
         {user ? (
-          <AccountDropdown />
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-400">Welcome, {user.email}</span>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg"
+            >
+              <LogOut size={16} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         ) : (
           <div className="flex items-center space-x-2">
             <button 
