@@ -5,16 +5,16 @@ import { Moon, Sun, Zap, LogOut, Download, ChevronDown, Globe } from 'lucide-rea
 import AuthModal from './AuthModal';
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-  { code: 'ko', name: '한국어', flag: '🇰🇷' }
+  { code: 'en', name: 'English', flag: 'https://flagcdn.com/w20/us.png', country: 'US' },
+  { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w20/es.png', country: 'ES' },
+  { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w20/fr.png', country: 'FR' },
+  { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w20/de.png', country: 'DE' },
+  { code: 'it', name: 'Italiano', flag: 'https://flagcdn.com/w20/it.png', country: 'IT' },
+  { code: 'pt', name: 'Português', flag: 'https://flagcdn.com/w20/pt.png', country: 'PT' },
+  { code: 'ru', name: 'Русский', flag: 'https://flagcdn.com/w20/ru.png', country: 'RU' },
+  { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w20/cn.png', country: 'CN' },
+  { code: 'ja', name: '日本語', flag: 'https://flagcdn.com/w20/jp.png', country: 'JP' },
+  { code: 'ko', name: '한국어', flag: 'https://flagcdn.com/w20/kr.png', country: 'KR' }
 ];
 
 const Header: React.FC = () => {
@@ -111,7 +111,11 @@ const Header: React.FC = () => {
             onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
             className="flex items-center space-x-2 text-gray-300 hover:text-white px-3 py-2 rounded-lg hover:bg-[#1E293B] transition-colors"
           >
-            <span className="text-lg">{selectedLanguage.flag}</span>
+            <img 
+              src={selectedLanguage.flag} 
+              alt={selectedLanguage.country}
+              className="w-5 h-4 rounded-sm"
+            />
             <span className="hidden sm:inline">{selectedLanguage.name}</span>
             <ChevronDown size={16} />
           </button>
@@ -127,7 +131,11 @@ const Header: React.FC = () => {
                       selectedLanguage.code === language.code ? 'bg-[#2D3748] text-[#22C55E]' : 'text-gray-300'
                     }`}
                   >
-                    <span className="text-lg">{language.flag}</span>
+                    <img 
+                      src={language.flag} 
+                      alt={language.country}
+                      className="w-5 h-4 rounded-sm"
+                    />
                     <span>{language.name}</span>
                   </button>
                 ))}
