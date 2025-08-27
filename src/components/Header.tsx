@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
-import { Moon, Sun, Zap, LogOut, Download, ChevronDown, Globe } from 'lucide-react';
+import { Moon, Sun, Zap, LogOut, Download, ChevronDown, Globe, User, Copy, Wallet, Share2, History, FileText, Shield, Trash2 } from 'lucide-react';
 import AuthModal from './AuthModal';
 
 const LANGUAGES = [
@@ -64,14 +64,99 @@ const Header: React.FC = () => {
       <div className="flex items-center space-x-4">
         {user ? (
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-400">Welcome, {user.email}</span>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg"
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center space-x-2 bg-[#2D3748] hover:bg-[#374151] px-4 py-2 rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#22C55E] flex items-center justify-center">
+                  <User size={16} className="text-white" />
+                </div>
+                <span className="text-sm text-gray-300">Account</span>
+                <ChevronDown size={16} className="text-gray-400" />
+              </button>
+              
+              {showUserDropdown && (
+                <div className="absolute right-0 top-full mt-2 bg-[#1E293B] rounded-lg shadow-lg border border-gray-700 min-w-[280px] z-50">
+                  {/* User Info Header */}
+                  <div className="p-4 border-b border-gray-700">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-[#22C55E] flex items-center justify-center">
+                        <User size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="text-white font-medium">{user.email}</div>
+                        <div className="flex items-center space-x-2">
+                          <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-0.5 rounded text-xs font-bold">
+                            VIP0
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-400">
+                      <span>ID: 9HDDRD0RS000</span>
+                      <button className="text-gray-400 hover:text-white">
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-2">
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <Wallet size={18} />
+                      <span>Asset Wallets</span>
+                    </button>
+                    
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <Share2 size={18} />
+                      <span>Share With Friends</span>
+                    </button>
+                    
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <History size={18} />
+                      <span>Transaction History</span>
+                    </button>
+                    
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <FileText size={18} />
+                      <span>Convert record</span>
+                    </button>
+                    
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <Shield size={18} />
+                      <span>Verification</span>
+                    </button>
+                    
+                    <div className="relative">
+                      <button className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                        <div className="flex items-center space-x-3">
+                          <Shield size={18} />
+                          <span>Security</span>
+                        </div>
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+                    
+                    <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white">
+                      <Trash2 size={18} />
+                      <span>Clear cache</span>
+                    </button>
+                  </div>
+
+                  {/* Logout */}
+                  <div className="border-t border-gray-700 py-2">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-red-400 hover:text-red-300"
+                    >
+                      <LogOut size={18} />
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <>
@@ -158,6 +243,14 @@ const Header: React.FC = () => {
         <div 
           className="fixed inset-0 z-40" 
           onClick={() => setShowLanguageDropdown(false)}
+        />
+      )}
+
+      {/* Click outside to close user dropdown */}
+      {showUserDropdown && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowUserDropdown(false)}
         />
       )}
 
