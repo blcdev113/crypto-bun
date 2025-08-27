@@ -58,7 +58,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: 'https://blcdev113-crypto-bun-r8a5.bolt.host/'
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       
@@ -99,7 +99,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: 'https://blcdev113-crypto-bun-r8a5.bolt.host/'
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       
@@ -127,7 +127,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://blcdev113-crypto-bun-r8a5.bolt.host/reset-password'
+        redirectTo: `${window.location.origin}/reset-password`
       });
       
       if (error) {
