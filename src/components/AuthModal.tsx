@@ -54,9 +54,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
     try {
       await signUp(email, password);
-      setSuccess('Magic link sent to your email! Please check your inbox and click the link to complete registration.');
+      setSuccess('Magic link sent to your email! Please check your inbox (including spam folder) and click the link to complete registration.');
       // Don't change mode - user will be redirected from email
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'Registration failed');
     }
   };
@@ -79,9 +80,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
     try {
       await signInWithOtp(email);
-      setSuccess('OTP sent to your email! Please check your inbox.');
+      setSuccess('Magic link sent to your email! Please check your inbox (including spam folder) and click the link to log in.');
       setMode('otp-verify');
     } catch (err: any) {
+      console.error('Magic link error:', err);
       setError(err.message || 'Failed to send OTP');
     }
   };
@@ -92,8 +94,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
     try {
       await resetPassword(email);
-      setSuccess('Password reset link sent to your email! Please check your inbox.');
+      setSuccess('Password reset link sent to your email! Please check your inbox (including spam folder) and click the link.');
     } catch (err: any) {
+      console.error('Reset password error:', err);
       setError(err.message || 'Failed to send reset email');
     }
   };
