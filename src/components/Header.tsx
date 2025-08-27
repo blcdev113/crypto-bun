@@ -111,10 +111,6 @@ const Header: React.FC = () => {
                         window.dispatchEvent(new CustomEvent('navigateToAssets'));
                       }}
                       className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-[#2D3748] transition-colors text-gray-300 hover:text-white"
-                    >
-                      <Wallet size={18} />
-                      <span>Asset Wallets</span>
-                    </button>
                       <span>Asset Wallets</span>
                     </button>
                     
